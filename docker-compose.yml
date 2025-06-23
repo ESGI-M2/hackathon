@@ -1,0 +1,15 @@
+# Development environment override
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/srv/app
+      - nextjs_node_modules_data:/srv/app/node_modules
+    ports:
+      - '${APP_PORT:-3000}:3000'
+
+volumes:
+  nextjs_node_modules_data:
