@@ -3,7 +3,6 @@ version: '3.8'
 services:
   api-gateway:
     build: ./apps/api-gateway
-    container_name: api-gateway
     volumes:
       - ./apps/api-gateway:/srv/app
     ports:
@@ -13,7 +12,6 @@ services:
 
   microservice-test:
     build: ./apps/microservice-test
-    container_name: microservice-test
     volumes:
       - ./apps/microservice-test:/srv/app
     ports:
@@ -21,8 +19,13 @@ services:
 
   frontend:
     build: ./apps/frontend
-    container_name: frontend
     ports:
       - "3000:3000"
+    volumes:
+      - ./apps/frontend:/srv/app
+      - nextjs_node_modules_data:/srv/app/node_modules
     depends_on:
       - api-gateway
+
+volumes:
+  nextjs_node_modules_data:
