@@ -1,15 +1,28 @@
-# Development environment override
-services:
-  app:
-    container_name: app
-    build:
-      context: .
-      target: dev
-    volumes:
-      - .:/srv/app
-      - nextjs_node_modules_data:/srv/app/node_modules
-    ports:
-      - '${APP_PORT:-3000}:3000'
+version: '3.8'
 
-volumes:
-  nextjs_node_modules_data:
+services:
+  api-gateway:
+    build: ./apps/api-gateway
+    container_name: api-gateway
+    volumes:
+      - ./apps/api-gateway:/srv/app
+    ports:
+      - "4000:4000"
+    depends_on:
+      - microservice-test
+
+  microservice-test:
+    build: ./apps/microservice-test
+    container_name: microservice-test
+    volumes:
+      - ./apps/microservice-test:/srv/app
+    ports:
+      - "4001:4001"
+
+  frontend:
+    build: ./apps/frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
