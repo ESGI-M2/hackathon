@@ -10,13 +10,13 @@ interface Props {
   initialSteps?: Step[];
 }
 
-const readFile = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
+const readFile = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
 
 export default function UniversalChat({ initialSteps = [] }: Props) {
   const [steps, setSteps] = useState<Step[]>(
@@ -95,22 +95,23 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
   }
 
   const renderTree = (idx: number, visited: Set<number>): JSX.Element | null => {
-    if (visited.has(idx)) return null;
-    visited.add(idx);
+    if (visited.has(idx)) return null
+    visited.add(idx)
+    const deps = steps[idx].dependencies.filter((d) => d >= 0)
     return (
-      <li key={idx} className="ml-4">
-        <div className="font-bold">Étape {idx + 1} ({Math.round(durations[idx] || 0)} ms)</div>
-        <div className="whitespace-pre-wrap break-words">{outputs[idx]}</div>
-        {steps[idx].dependencies.filter((d) => d >= 0).length > 0 && (
-          <ul>
-            {steps[idx].dependencies
-              .filter((d) => d >= 0)
-              .map((d) => renderTree(d, visited))}
+      <li key={idx} className="relative pl-4 border-l-2">
+        <div className="ml-2">
+          <div className="font-bold">Étape {idx + 1} ({Math.round(durations[idx] || 0)} ms)</div>
+          <div className="whitespace-pre-wrap break-words">{outputs[idx]}</div>
+        </div>
+        {deps.length > 0 && (
+          <ul className="ml-4 flex flex-col-reverse">
+            {deps.map((d) => renderTree(d, visited))}
           </ul>
         )}
       </li>
-    );
-  };
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -188,7 +189,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
         {loadingIndex !== null ? `Étape ${loadingIndex + 1}...` : "Envoyer"}
       </button>
       {outputs.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="space-y-2 flex flex-col-reverse">
           {renderTree(steps.length - 1, new Set())}
           {loadingIndex !== null && (
             <li className="loading loading-spinner"></li>
