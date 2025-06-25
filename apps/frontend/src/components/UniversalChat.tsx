@@ -14,7 +14,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
     initialSteps.length > 0 ? initialSteps : [{ prompt: "" }],
   );
   const [input, setInput] = useState("");
-  const [output, setOutput] = useState<string | null>(null);
+  const [outputs, setOutputs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const updatePrompt = (idx: number, value: string) =>
@@ -38,7 +38,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       }),
     });
     const data = await res.json();
-    setOutput(data.output);
+    setOutputs(data.outputs);
     setLoading(false);
   };
 
@@ -69,7 +69,15 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       <button className="btn btn-primary" onClick={send} disabled={loading}>
         {loading ? "Envoi..." : "Envoyer"}
       </button>
-      {output && <div className="mt-4 p-2 border rounded">{output}</div>}
+      {outputs.length > 0 && (
+        <div className="space-y-2">
+          {outputs.map((o, i) => (
+            <div key={i} className="p-2 border rounded">
+              {o}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
