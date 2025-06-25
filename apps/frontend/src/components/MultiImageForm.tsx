@@ -12,6 +12,7 @@ export interface Field {
 interface ImageRecord {
   file: File;
   data: Record<string, string>;
+  loading?: boolean;
 }
 
 const slugify = (str: string) =>
@@ -65,9 +66,45 @@ export default function MultiImageForm({ initialFields }: Props) {
   const removeField = (idx: number) =>
     setFields((prev) => prev.filter((_, i) => i !== idx));
 
+  const readFile = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+  const extractForFile = async (file: File, idx: number) => {
+    try {
+      const image = await readFile(file);
+      const res = await fetch("/api/extract-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: fields.map(({ name, label, type }) => ({ name, label, type })),
+          image,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Extraction error", await res.text());
+        return;
+      }
+      const text = await res.text();
+      const data = JSON.parse(text);
+      setRecords((prev) =>
+        prev.map((r, i) => (i === idx ? { ...r, data, loading: false } : r)),
+      );
+    } catch (err) {
+      console.error("Extraction failed", err);
+    }
+  };
+
   const handleFiles = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setRecords(files.map((file) => ({ file, data: {} })));
+    setRecords(files.map((file) => ({ file, data: {}, loading: true })));
+    files.forEach((file, idx) => {
+      extractForFile(file, idx);
+    });
   };
 
   const handleRecordChange = (
@@ -94,14 +131,14 @@ export default function MultiImageForm({ initialFields }: Props) {
               className="input input-bordered flex-1"
               placeholder="Label"
               value={field.label}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleFieldChange(idx, "label", e.target.value)
               }
             />
             <select
               className="select select-bordered"
               value={field.type}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 handleFieldChange(idx, "type", e.target.value)
               }
             >
@@ -140,13 +177,14 @@ export default function MultiImageForm({ initialFields }: Props) {
             <thead>
               <tr>
                 <th>Image</th>
-                {fields.map((f) => (
+                {fields.map((f: Field) => (
                   <th key={f.id}>{f.label || "Champ"}</th>
                 ))}
+                <th>Statut</th>
               </tr>
             </thead>
             <tbody>
-              {records.map((rec, recIdx) => (
+              {records.map((rec: ImageRecord, recIdx: number) => (
                 <tr key={recIdx}>
                   <td>
                     <img
@@ -155,13 +193,13 @@ export default function MultiImageForm({ initialFields }: Props) {
                       className="h-20"
                     />
                   </td>
-                  {fields.map((f) => (
+                  {fields.map((f: Field) => (
                     <td key={f.id}>
                       <input
                         type={f.type}
                         className="input input-bordered w-full"
                         value={rec.data[f.name] || ""}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleRecordChange(
                             recIdx,
                             f.name,
@@ -171,6 +209,9 @@ export default function MultiImageForm({ initialFields }: Props) {
                       />
                     </td>
                   ))}
+                  <td className="text-sm text-gray-500">
+                    {rec.loading ? "Extraction..." : "OK"}
+                  </td>
                 </tr>
               ))}
             </tbody>
