@@ -44,17 +44,21 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
     setSteps(prev => [...prev, { prompt: '', dependencies: [prev.length - 1] }])
   }
 
+  const resetDeps = (idx: number) => {
+    updateDeps(idx, [idx > 0 ? idx - 1 : -1])
+  }
+
   const removeStep = (idx: number) => {
     console.debug('removeStep', idx)
     setSteps(prev =>
       prev
         .filter((_, i) => i !== idx)
-        .map(s => ({
-          ...s,
-          dependencies: s.dependencies
+        .map((s, i) => {
+          const deps = s.dependencies
             .filter(d => d !== idx)
-            .map(d => (d > idx ? d - 1 : d)),
-        })),
+            .map(d => (d > idx ? d - 1 : d))
+          return { ...s, dependencies: deps.length > 0 ? deps : [i - 1] }
+        }),
     )
   }
 
@@ -72,10 +76,10 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
         if (dir < 0 && i < idx && i >= target) return i + 1
         return i
       })
-      return arr.map(step => ({
-        ...step,
-        dependencies: step.dependencies.map(d => (d === -1 ? -1 : map[d])),
-      }))
+      return arr.map((step, i) => {
+        const deps = step.dependencies.map(d => (d === -1 ? -1 : map[d]))
+        return { ...step, dependencies: deps.length > 0 ? deps : [i - 1] }
+      })
     })
   }
 
@@ -184,6 +188,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
                   ))}
                 </ul>
               </div>
+              <button className="btn" onClick={() => resetDeps(idx)}>↺</button>
               <button className="btn" disabled={idx === 0} onClick={() => moveStep(idx, -1)}>↑</button>
               <button className="btn" disabled={idx === steps.length - 1} onClick={() => moveStep(idx, 1)}>↓</button>
               <button className="btn btn-error" onClick={() => removeStep(idx)}>Supprimer</button>
