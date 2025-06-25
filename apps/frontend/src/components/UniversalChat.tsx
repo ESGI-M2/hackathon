@@ -9,13 +9,23 @@ interface Props {
   initialSteps?: Step[];
 }
 
+const readFile = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 export default function UniversalChat({ initialSteps = [] }: Props) {
   const [steps, setSteps] = useState<Step[]>(
     initialSteps.length > 0 ? initialSteps : [{ prompt: "" }],
   );
+  const [globalPrompt, setGlobalPrompt] = useState("");
   const [input, setInput] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [outputs, setOutputs] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   const updatePrompt = (idx: number, value: string) =>
     setSteps((prev) => prev.map((s, i) => (i === idx ? { prompt: value } : s)));
@@ -27,19 +37,22 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
 
   const send = async () => {
     const prompts = steps.map((s) => s.prompt.trim()).filter(Boolean);
-    if (!input.trim() || prompts.length === 0) return;
-    setLoading(true);
-    const res = await fetch("/api/universal-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        input,
-        steps: prompts.map((p) => ({ prompt: p })),
-      }),
-    });
-    const data = await res.json();
-    setOutputs(data.outputs);
-    setLoading(false);
+    if (prompts.length === 0 || (!input.trim() && !file)) return;
+    setOutputs([]);
+    let current = input;
+    const media = file ? await readFile(file) : undefined;
+    for (const [idx, prompt] of prompts.entries()) {
+      setLoadingIndex(idx);
+      const res = await fetch("/api/universal-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: current, prompt, globalPrompt, media }),
+      });
+      const data = await res.json();
+      current = data.output;
+      setOutputs((prev) => [...prev, current]);
+    }
+    setLoadingIndex(null);
   };
 
   return (
@@ -60,14 +73,26 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       <button className="btn btn-secondary" onClick={addStep}>
         Ajouter une étape
       </button>
+      <input
+        className="input input-bordered w-full"
+        placeholder="Prompt global"
+        value={globalPrompt}
+        onChange={(e) => setGlobalPrompt(e.target.value)}
+      />
       <textarea
         className="textarea textarea-bordered w-full"
         placeholder="Entrée"
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
-      <button className="btn btn-primary" onClick={send} disabled={loading}>
-        {loading ? "Envoi..." : "Envoyer"}
+      <input
+        type="file"
+        accept="image/*"
+        className="file-input file-input-bordered w-full"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
+      <button className="btn btn-primary" onClick={send} disabled={loadingIndex !== null}>
+        {loadingIndex !== null ? `Étape ${loadingIndex + 1}...` : "Envoyer"}
       </button>
       {outputs.length > 0 && (
         <div className="space-y-2">
@@ -76,6 +101,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
               {o}
             </div>
           ))}
+          {loadingIndex !== null && <span className="loading loading-spinner"></span>}
         </div>
       )}
     </div>
