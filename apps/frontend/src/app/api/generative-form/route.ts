@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { getAIModel } from "@/lib/aiProvider";
 import { streamObject } from "ai";
 import { z } from "zod";
 
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const input: string = await req.json();
 
     const result = streamObject({
-        model: openai("gpt-4o-mini"),
+        model: getAIModel(),
         system: `
 Vous êtes un générateur de formulaires dynamiques pour une plateforme de services digitale en ligne.
 Générez **uniquement** un objet JSON correspondant à la demande :
