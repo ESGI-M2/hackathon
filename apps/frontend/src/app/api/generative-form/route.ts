@@ -1,62 +1,29 @@
-import { getAIModel } from "@/lib/aiProvider";
-import { streamObject } from "ai";
-import { z } from "zod";
+// src/app/api/generative-form/route.ts
+import { NextResponse } from "next/server";
 
-const fieldSchema = z.object({
-    label: z.string(),
-    name: z.string(),
-    type: z.enum([
-        "text",
-        "number",
-        "email",
-        "date",
-        "textarea",
-        "select",
-        "radio",
-        "checkbox",
-        "file",
-        "color",
-        "url",
-        "tel",
-        "time",
-        "week",
-        "month",
-        "range",
-        "search",
-        "datetime-local",
-    ]),
-    placeholder: z.string(),
-    options: z.array(z.string()).optional(),
-    description: z.string(),
-    required: z.boolean(),
-});
+export async function POST(request: Request) {
+    const { prompt } = await request.json();
 
-const formSchema = z.object({
-    fields: z.array(fieldSchema),
-});
-
-export const maxDuration = 30;
-
-export async function POST(req: Request) {
-    const input: string = await req.json();
-
-    const result = streamObject({
-        model: getAIModel(),
-        system: `
-Vous êtes un générateur de formulaires dynamiques pour une plateforme de services digitale en ligne.
-Générez **uniquement** un objet JSON correspondant à la demande :
-"${input}"
-– Utilisez strictement les types HTML5 pertinents.
-– Pas de champs inutiles, redondants, button, hidden ou password.
-– Les champs doivent être UX-friendly et ordonnés du plus essentiel au plus accessoire.
-- Pas de doublons dans les noms de champs et les options.
-    `.trim(),
-        prompt: `Générez le JSON du formulaire pour "${input}".`,
-        schema: formSchema,
-        onFinish({ object }) {
-            console.log("Form object generated:", object);
-        },
+    // 2. Call your API-Gateway endpoint
+    const response = await fetch("http://api-gateway:4000/generate-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt }),
     });
 
-    return result.toTextStreamResponse();
+    const payload = await response.json();
+    if (!response.ok) {
+        return NextResponse.json(
+            { error: payload.error ?? payload },
+            { status: response.status }
+        );
+    }
+
+    const fields = Array.isArray(payload.object)
+        ? // if object is [[…],[…]] flatten it
+          (payload.object as any[][]).flat()
+        : // if object is already your fields array
+          (payload.object ?? payload);
+
+    return NextResponse.json(fields);
 }

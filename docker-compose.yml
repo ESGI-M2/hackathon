@@ -1,31 +1,39 @@
-version: '3.8'
-
+version: "3.8"
 services:
   api-gateway:
-    build: ./apps/api-gateway
+    build:
+      context: ./apps/api-gateway
     volumes:
       - ./apps/api-gateway:/srv/app
+      - api_gateway_node_modules:/srv/app/node_modules
+    command: npm run start:dev
+    env_file: ./apps/api-gateway/.env
     ports:
       - "4000:4000"
-    depends_on:
-      - microservice-test
 
-  microservice-test:
-    build: ./apps/microservice-test
+  form-generator-service:
+    build:
+      context: ./apps/form-generator-service
     volumes:
-      - ./apps/microservice-test:/srv/app
+      - ./apps/form-generator-service:/srv/app
+      - form_gen_node_modules:/srv/app/node_modules
+    command: npm run start:dev
+    env_file: ./apps/form-generator-service/.env
     ports:
-      - "4001:4001"
+      - "3999:3999"
 
   frontend:
-    build: ./apps/frontend
-    ports:
-      - "3000:3000"
+    build:
+      context: ./apps/frontend
     volumes:
       - ./apps/frontend:/srv/app
       - nextjs_node_modules_data:/srv/app/node_modules
-    depends_on:
-      - api-gateway
+    command: npm run dev
+    env_file: ./apps/frontend/.env
+    ports:
+      - "3000:3000"
 
 volumes:
   nextjs_node_modules_data:
+  api_gateway_node_modules:
+  form_gen_node_modules:
