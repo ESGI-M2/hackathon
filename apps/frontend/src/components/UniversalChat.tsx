@@ -31,67 +31,68 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
   const [durations, setDurations] = useState<number[]>([]);
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
-  const updatePrompt = (idx: number, value: string) =>
-    setSteps((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, prompt: value } : s)),
-    );
+  const updatePrompt = (idx: number, value: string) => {
+    console.debug('updatePrompt', idx, value)
+    setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, prompt: value } : s)))
+  }
 
-  const updateDeps = (idx: number, deps: number[]) =>
-    setSteps((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, dependencies: deps } : s)),
-    );
+  const updateDeps = (idx: number, deps: number[]) => {
+    console.debug('updateDeps', idx, deps)
+    setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, dependencies: deps } : s)))
+  }
 
-  const addStep = () =>
-    setSteps((prev) => [
-      ...prev,
-      { prompt: "", dependencies: [prev.length - 1] },
-    ]);
+  const addStep = () => {
+    console.debug('addStep')
+    setSteps((prev) => [...prev, { prompt: '', dependencies: [prev.length - 1] }])
+  }
 
-  const removeStep = (idx: number) =>
-    setSteps((prev) => prev.filter((_, i) => i !== idx));
+  const removeStep = (idx: number) => {
+    console.debug('removeStep', idx)
+    setSteps((prev) => prev.filter((_, i) => i !== idx))
+  }
 
-  const moveStep = (idx: number, dir: number) =>
+  const moveStep = (idx: number, dir: number) => {
+    console.debug('moveStep', idx, dir)
     setSteps((prev) => {
-      const arr = [...prev];
-      const [s] = arr.splice(idx, 1);
-      arr.splice(idx + dir, 0, s);
-      return arr;
-    });
+      const arr = [...prev]
+      const [s] = arr.splice(idx, 1)
+      arr.splice(idx + dir, 0, s)
+      return arr
+    })
+  }
 
   const send = async () => {
-    const prompts = steps.map((s) => s.prompt.trim()).filter(Boolean);
-    if (prompts.length === 0) return;
-    setOutputs([]);
-    setDurations([]);
-    let current = input;
-    const media = file ? await readFile(file) : undefined;
-    const outs: string[] = [];
-    const times: number[] = [];
+    const prompts = steps.map((s) => s.prompt.trim()).filter(Boolean)
+    if (prompts.length === 0) return
+    console.debug('send start', prompts)
+    setOutputs([])
+    setDurations([])
+    let current = input
+    const media = file ? await readFile(file) : undefined
+    const outs: string[] = []
+    const times: number[] = []
     for (let idx = 0; idx < steps.length; idx++) {
-      const step = steps[idx];
-      if (!step.prompt.trim()) continue;
-      setLoadingIndex(idx);
-      const deps =
-        step.dependencies && step.dependencies.length > 0
-          ? step.dependencies
-          : [idx - 1];
-      current = deps
-        .map((d) => (d === -1 ? input : outs[d] || ""))
-        .join("\n");
-      const start = performance.now();
-      const res = await fetch("/api/universal-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const step = steps[idx]
+      if (!step.prompt.trim()) continue
+      setLoadingIndex(idx)
+      const deps = step.dependencies && step.dependencies.length > 0 ? step.dependencies : [idx - 1]
+      current = deps.map((d) => (d === -1 ? input : outs[d] || '')).join('\n')
+      console.debug('step input', idx, current)
+      const start = performance.now()
+      const res = await fetch('/api/universal-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: current, prompt: step.prompt, globalPrompt, media }),
-      });
-      const data = await res.json();
-      outs[idx] = data.output;
-      times[idx] = performance.now() - start;
-      setOutputs([...outs]);
-      setDurations([...times]);
+      })
+      const data = await res.json()
+      outs[idx] = data.output
+      times[idx] = performance.now() - start
+      console.debug('step output', idx, data.output, times[idx])
+      setOutputs([...outs])
+      setDurations([...times])
     }
-    setLoadingIndex(null);
-  };
+    setLoadingIndex(null)
+  }
 
   const renderTree = (idx: number, visited: Set<number>): JSX.Element | null => {
     if (visited.has(idx)) return null;
@@ -115,6 +116,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
     <div className="space-y-4">
       {steps.map((step, idx) => (
         <div key={idx} className="flex gap-2 items-center">
+          <span className="w-6 text-right">{idx + 1}</span>
           <input
             className="input input-bordered flex-1"
             placeholder={`Étape ${idx + 1}`}
