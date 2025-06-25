@@ -77,7 +77,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       setLoadingIndex(idx)
       const deps = step.dependencies && step.dependencies.length > 0 ? step.dependencies : [idx - 1]
       current = deps.map((d) => (d === -1 ? input : outs[d] || '')).join('\n')
-      console.debug('step input', idx, current)
+      console.debug('step request', { idx, prompt: step.prompt, input: current })
       const start = performance.now()
       const res = await fetch('/api/universal-chat', {
         method: 'POST',
@@ -87,7 +87,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       const data = await res.json()
       outs[idx] = data.output
       times[idx] = performance.now() - start
-      console.debug('step output', idx, data.output, times[idx])
+      console.debug('step output', { idx, output: data.output, duration: times[idx] })
       setOutputs([...outs])
       setDurations([...times])
     }
