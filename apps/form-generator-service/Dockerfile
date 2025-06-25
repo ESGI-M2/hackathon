@@ -4,8 +4,8 @@ WORKDIR /srv/app
 # Dev image
 FROM node_upstream as dev
 
-EXPOSE 4001
-ENV PORT=4001
+EXPOSE 3999
+ENV PORT=3999
 
 COPY package.json .
 COPY package-lock.json .

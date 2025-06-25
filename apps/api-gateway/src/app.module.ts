@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TestModule } from './test/test.module';
+import { FormGeneratorModule } from './form-generator/form-generator.module';
 
 @Module({
-  imports: [TestModule],
+  imports: [FormGeneratorModule],
 })
 export class AppModule {}
