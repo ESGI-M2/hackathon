@@ -44,14 +44,14 @@ export const DynamicForm: React.FC<Props> = ({ schema, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit}>
       {schema.map((field, idx) => (
-        <fieldset key={`${field.name}-${idx}`} className="fieldset">
-          <legend className="fieldset-legend">{field.label}</legend>
+        <fieldset key={`${field.name}-${idx}`} className="fieldset text-white">
+          <legend className="fieldset-legend text-white">{field.label}</legend>
 
           {/* Select */}
           {field.type === "select" && (
             <select
               name={field.name}
-              className="select select-bordered w-full"
+              className="select select-bordered w-full bg-white text-black"
               onChange={handleChange}
               defaultValue=""
               required={field.required}
@@ -72,7 +72,7 @@ export const DynamicForm: React.FC<Props> = ({ schema, onSubmit }) => {
             <textarea
               name={field.name}
               placeholder={field.placeholder}
-              className="textarea textarea-bordered w-full"
+              className="textarea textarea-bordered w-full bg-white text-black"
               onChange={handleChange}
               required={field.required}
             />
@@ -80,11 +80,11 @@ export const DynamicForm: React.FC<Props> = ({ schema, onSubmit }) => {
 
           {/* Radio */}
           {field.type === "radio" && field.options && (
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-col gap-2 mt-2 text-white">
               {field.options.map((opt, optIdx) => (
                 <label
                   key={`${field.name}-radio-${optIdx}`}
-                  className="label cursor-pointer"
+                  className="label cursor-pointer text-white"
                 >
                   <input
                     type="radio"
@@ -102,7 +102,7 @@ export const DynamicForm: React.FC<Props> = ({ schema, onSubmit }) => {
 
           {/* Checkbox */}
           {field.type === "checkbox" && (
-            <label className="label cursor-pointer gap-2 mt-2">
+            <label className="label cursor-pointer gap-2 mt-2 text-white">
               <input
                 type="checkbox"
                 name={field.name}
@@ -138,15 +138,15 @@ export const DynamicForm: React.FC<Props> = ({ schema, onSubmit }) => {
               type={field.type}
               name={field.name}
               placeholder={field.placeholder}
-              className="input input-bordered w-full"
+              className="input input-bordered w-full bg-white text-black"
               onChange={handleChange}
               required={field.required}
-              value={field.value || ""}
+              value={formState[field.name] ?? ""}
             />
           )}
 
           {field.description && (
-            <p className="label mt-1">{field.description}</p>
+            <p className="label mt-1 text-white">{field.description}</p>
           )}
         </fieldset>
       ))}
