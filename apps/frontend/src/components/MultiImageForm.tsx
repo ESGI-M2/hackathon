@@ -121,6 +121,29 @@ export default function MultiImageForm({ initialFields }: Props) {
     );
   };
 
+  const exportCSV = () => {
+    const header = ["Fichier", ...fields.map((f) => f.label || f.name)];
+    const rows = records.map((rec) => [
+      rec.file.name,
+      ...fields.map((f) => rec.data[f.name] || ""),
+    ]);
+
+    const escape = (val: string) =>
+      `"${val.replace(/"/g, '""')}"`;
+
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => escape(String(cell ?? ""))).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "extraction.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-4 space-y-4">
       <section>
@@ -172,7 +195,12 @@ export default function MultiImageForm({ initialFields }: Props) {
 
       {records.length > 0 && (
         <section>
-          <h2 className="font-bold mb-2">Informations</h2>
+          <h2 className="font-bold mb-2 flex items-center justify-between">
+            <span>Informations</span>
+            <button className="btn btn-secondary btn-sm" onClick={exportCSV}>
+              Exporter CSV
+            </button>
+          </h2>
           <table className="table w-full">
             <thead>
               <tr>
