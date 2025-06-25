@@ -3,6 +3,7 @@ import { useState } from "react";
 
 interface Step {
   prompt: string;
+  dependencies: number[];
 }
 
 interface Props {
@@ -19,52 +20,142 @@ const readFile = (file: File) =>
 
 export default function UniversalChat({ initialSteps = [] }: Props) {
   const [steps, setSteps] = useState<Step[]>(
-    initialSteps.length > 0 ? initialSteps : [{ prompt: "" }],
+    initialSteps.length > 0
+      ? initialSteps
+      : [{ prompt: "", dependencies: [-1] }],
   );
   const [globalPrompt, setGlobalPrompt] = useState("");
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [outputs, setOutputs] = useState<string[]>([]);
+  const [durations, setDurations] = useState<number[]>([]);
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   const updatePrompt = (idx: number, value: string) =>
-    setSteps((prev) => prev.map((s, i) => (i === idx ? { prompt: value } : s)));
+    setSteps((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, prompt: value } : s)),
+    );
 
-  const addStep = () => setSteps((prev) => [...prev, { prompt: "" }]);
+  const updateDeps = (idx: number, deps: number[]) =>
+    setSteps((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, dependencies: deps } : s)),
+    );
+
+  const addStep = () =>
+    setSteps((prev) => [
+      ...prev,
+      { prompt: "", dependencies: [prev.length - 1] },
+    ]);
 
   const removeStep = (idx: number) =>
     setSteps((prev) => prev.filter((_, i) => i !== idx));
 
+  const moveStep = (idx: number, dir: number) =>
+    setSteps((prev) => {
+      const arr = [...prev];
+      const [s] = arr.splice(idx, 1);
+      arr.splice(idx + dir, 0, s);
+      return arr;
+    });
+
   const send = async () => {
     const prompts = steps.map((s) => s.prompt.trim()).filter(Boolean);
-    if (prompts.length === 0 || (!input.trim() && !file)) return;
+    if (prompts.length === 0) return;
     setOutputs([]);
+    setDurations([]);
     let current = input;
     const media = file ? await readFile(file) : undefined;
-    for (const [idx, prompt] of prompts.entries()) {
+    const outs: string[] = [];
+    const times: number[] = [];
+    for (let idx = 0; idx < steps.length; idx++) {
+      const step = steps[idx];
+      if (!step.prompt.trim()) continue;
       setLoadingIndex(idx);
+      const deps =
+        step.dependencies && step.dependencies.length > 0
+          ? step.dependencies
+          : [idx - 1];
+      current = deps
+        .map((d) => (d === -1 ? input : outs[d] || ""))
+        .join("\n");
+      const start = performance.now();
       const res = await fetch("/api/universal-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: current, prompt, globalPrompt, media }),
+        body: JSON.stringify({ input: current, prompt: step.prompt, globalPrompt, media }),
       });
       const data = await res.json();
-      current = data.output;
-      setOutputs((prev) => [...prev, current]);
+      outs[idx] = data.output;
+      times[idx] = performance.now() - start;
+      setOutputs([...outs]);
+      setDurations([...times]);
     }
     setLoadingIndex(null);
+  };
+
+  const renderTree = (idx: number, visited: Set<number>): JSX.Element | null => {
+    if (visited.has(idx)) return null;
+    visited.add(idx);
+    return (
+      <li key={idx} className="ml-4">
+        <div className="font-bold">Étape {idx + 1} ({Math.round(durations[idx] || 0)} ms)</div>
+        <div className="whitespace-pre-wrap break-words">{outputs[idx]}</div>
+        {steps[idx].dependencies.filter((d) => d >= 0).length > 0 && (
+          <ul>
+            {steps[idx].dependencies
+              .filter((d) => d >= 0)
+              .map((d) => renderTree(d, visited))}
+          </ul>
+        )}
+      </li>
+    );
   };
 
   return (
     <div className="space-y-4">
       {steps.map((step, idx) => (
-        <div key={idx} className="flex gap-2">
+        <div key={idx} className="flex gap-2 items-center">
           <input
             className="input input-bordered flex-1"
             placeholder={`Étape ${idx + 1}`}
             value={step.prompt}
             onChange={(e) => updatePrompt(idx, e.target.value)}
           />
+          <select
+            multiple
+            className="select select-bordered"
+            value={step.dependencies.map(String)}
+            onChange={(e) =>
+              updateDeps(
+                idx,
+                Array.from(e.target.selectedOptions).map((o) =>
+                  parseInt(o.value),
+                ),
+              )
+            }
+          >
+            <option value={-1}>Entrée</option>
+            {steps.map(
+              (_, i) =>
+                i < idx && (
+                  <option key={i} value={i}>{`Étape ${i + 1}`}</option>
+                ),
+            )}
+          </select>
+          <button
+            className="btn"
+            disabled={idx === 0}
+            onClick={() => moveStep(idx, -1)}
+          >
+            ↑
+          </button>
+          <button
+            className="btn"
+            disabled={idx === steps.length - 1}
+            onClick={() => moveStep(idx, 1)}
+          >
+            ↓
+          </button>
           <button className="btn btn-error" onClick={() => removeStep(idx)}>
             Supprimer
           </button>
@@ -95,14 +186,12 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
         {loadingIndex !== null ? `Étape ${loadingIndex + 1}...` : "Envoyer"}
       </button>
       {outputs.length > 0 && (
-        <div className="space-y-2">
-          {outputs.map((o, i) => (
-            <div key={i} className="p-2 border rounded">
-              {o}
-            </div>
-          ))}
-          {loadingIndex !== null && <span className="loading loading-spinner"></span>}
-        </div>
+        <ul className="space-y-2">
+          {renderTree(steps.length - 1, new Set())}
+          {loadingIndex !== null && (
+            <li className="loading loading-spinner"></li>
+          )}
+        </ul>
       )}
     </div>
   );
