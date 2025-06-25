@@ -95,7 +95,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
   const renderTree = (idx: number, visited: Set<number>): JSX.Element | null => {
     if (visited.has(idx)) return null
     visited.add(idx)
-    const deps = steps[idx].dependencies.filter(d => d >= 0)
+    const deps = (steps[idx].dependencies.length > 0 ? steps[idx].dependencies : [idx - 1]).filter(d => d >= 0)
     return (
       <li key={idx} className="border-l pl-4">
         <div className="ml-2">
@@ -110,7 +110,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
   const renderPreview = (idx: number, visited: Set<number>): JSX.Element | null => {
     if (visited.has(idx)) return null
     visited.add(idx)
-    const deps = steps[idx].dependencies && steps[idx].dependencies.length > 0 ? steps[idx].dependencies : [idx - 1]
+    const deps = steps[idx].dependencies.length > 0 ? steps[idx].dependencies : [idx - 1]
     return (
       <li key={idx} className="border-l pl-4">
         <div className="ml-2">Étape {idx + 1}</div>
@@ -124,9 +124,11 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
   return (
     <div className="space-y-4">
       {steps.map((step, idx) => {
-        const primary = step.dependencies[0] ?? idx - 1
-        const extras = step.dependencies.slice(1)
         const options = [-1, ...steps.slice(0, idx).map((_, i) => i)]
+        const selected = step.dependencies.length > 0 ? step.dependencies : [idx - 1]
+        const label = selected
+          .map(o => (o === -1 ? 'Entrée' : `Étape ${o + 1}`))
+          .join(', ')
         return (
           <div key={idx} className="space-y-2 border p-2 rounded-box">
             <div className="flex gap-2 items-center">
@@ -137,43 +139,30 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
                 value={step.prompt}
                 onChange={e => updatePrompt(idx, e.target.value)}
               />
-              <div className="join">
-                {options.map(o => (
-                  <label key={o} className="btn join-item">
-                    <input
-                      type="radio"
-                      name={`dep-${idx}`}
-                      className="radio hidden"
-                      checked={primary === o}
-                      onChange={() => updateDeps(idx, [o, ...extras.filter(d => d !== o)])}
-                    />
-                    {o === -1 ? 'Entrée' : `Étape ${o + 1}`}
-                  </label>
-                ))}
-                <div className="dropdown dropdown-end join-item">
-                  <div tabIndex={0} role="button" className="btn">+</div>
-                  <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    {options.map(o => (
-                      <li key={o}>
-                        <label className="label cursor-pointer gap-2">
-                          <input
-                            type="checkbox"
-                            className="checkbox"
-                            checked={extras.includes(o)}
-                            onChange={e => {
-                              const checked = e.target.checked
-                              updateDeps(
-                                idx,
-                                [primary, ...checked ? [...extras, o] : extras.filter(d => d !== o)].filter((v, i, a) => i === 0 || a.indexOf(v) === i),
-                              )
-                            }}
-                          />
-                          <span>{o === -1 ? 'Entrée' : `Étape ${o + 1}`}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <span className="truncate max-w-xs">{label}</span>
+              <div className="dropdown dropdown-end">
+                <div tabIndex={0} role="button" className="btn">+</div>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                  {options.map(o => (
+                    <li key={o}>
+                      <label className="label cursor-pointer gap-2">
+                        <input
+                          type="checkbox"
+                          className="checkbox"
+                          checked={step.dependencies.includes(o)}
+                          onChange={e => {
+                            const checked = e.target.checked
+                            const deps = checked
+                              ? [...step.dependencies, o]
+                              : step.dependencies.filter(d => d !== o)
+                            updateDeps(idx, Array.from(new Set(deps)))
+                          }}
+                        />
+                        <span>{o === -1 ? 'Entrée' : `Étape ${o + 1}`}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <button className="btn" disabled={idx === 0} onClick={() => moveStep(idx, -1)}>↑</button>
               <button className="btn" disabled={idx === steps.length - 1} onClick={() => moveStep(idx, 1)}>↓</button>
