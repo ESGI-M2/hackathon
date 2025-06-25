@@ -46,16 +46,36 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
 
   const removeStep = (idx: number) => {
     console.debug('removeStep', idx)
-    setSteps(prev => prev.filter((_, i) => i !== idx))
+    setSteps(prev =>
+      prev
+        .filter((_, i) => i !== idx)
+        .map(s => ({
+          ...s,
+          dependencies: s.dependencies
+            .filter(d => d !== idx)
+            .map(d => (d > idx ? d - 1 : d)),
+        })),
+    )
   }
 
   const moveStep = (idx: number, dir: number) => {
     console.debug('moveStep', idx, dir)
     setSteps(prev => {
+      const target = idx + dir
+      if (target < 0 || target >= prev.length) return prev
       const arr = [...prev]
       const [s] = arr.splice(idx, 1)
-      arr.splice(idx + dir, 0, s)
-      return arr
+      arr.splice(target, 0, s)
+      const map = prev.map((_, i) => {
+        if (i === idx) return target
+        if (dir > 0 && i > idx && i <= target) return i - 1
+        if (dir < 0 && i < idx && i >= target) return i + 1
+        return i
+      })
+      return arr.map(step => ({
+        ...step,
+        dependencies: step.dependencies.map(d => (d === -1 ? -1 : map[d])),
+      }))
     })
   }
 
