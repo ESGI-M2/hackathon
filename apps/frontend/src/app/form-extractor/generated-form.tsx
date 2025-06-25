@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { DynamicForm } from "@/components/DynamicForm";
+import React, { useState } from "react";
+import MultiImageForm, { Field } from "@/components/MultiImageForm";
 
 interface FormField {
   name: string;
@@ -20,6 +20,7 @@ export default function GeneratedFormPage() {
   const [schema, setSchema] = useState<FormField[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
 
   // Lit le fichier image et stocke sa version Base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,6 +77,7 @@ export default function GeneratedFormPage() {
 
       const { fields }: { fields: FormField[] } = JSON.parse(jsonString);
       setSchema(fields);
+      setStep(2);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -84,8 +86,9 @@ export default function GeneratedFormPage() {
   };
 
   return (
-    <div className="p-4">
-      <form className="mb-4">
+    <div className="p-4 space-y-4">
+      {step === 1 && (
+        <form className="mb-4">
         <label className="block text-sm font-medium mb-2">
           Décrivez votre extraction
         </label>
@@ -116,13 +119,15 @@ export default function GeneratedFormPage() {
           {loading ? "Analyse en cours…" : "Valider"}
         </button>
       </form>
+      )}
 
-      {schema && (
-        <DynamicForm
-          schema={schema}
-          onSubmit={(data) => {
-            console.log("Données soumises :", data);
-          }}
+      {step === 2 && schema && (
+        <MultiImageForm
+          initialFields={schema.map(({ name, label, type }) => ({
+            name,
+            label,
+            type,
+          }))}
         />
       )}
     </div>
