@@ -28,6 +28,8 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
   const [title, setTitle] = useState("");
   const [chatSteps, setChatSteps] = useState<ChatStep[]>([]);
   const [chatGlobalPrompt, setChatGlobalPrompt] = useState("");
+  const ready = records.length > 0 && records.every(r => !r.loading);
+  const chatInput = JSON.stringify(records.map(r => r.data));
 
   useEffect(() => {
     if (!templateId) return;
@@ -168,9 +170,9 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
         </div>
       )}
 
-      {records.length > 0 && (
+      {ready && (
         <UniversalChat
-          initialInput={JSON.stringify(records.map(r => r.data))}
+          initialInput={chatInput}
           initialSteps={chatSteps}
           initialGlobalPrompt={chatGlobalPrompt}
           onChange={(steps, gp) => {

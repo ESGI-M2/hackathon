@@ -25,7 +25,7 @@ interface Template {
 export default function ExtractionModal({ open, onClose, template }: { open: boolean; onClose: () => void; template: Template }) {
   const [files, setFiles] = useState<File[]>([])
   const [records, setRecords] = useState<Record<string, string>[]>([])
-  const [outputs, setOutputs] = useState<string[][]>([])
+  const [outputs, setOutputs] = useState<string[]>([])
   const [currentFile, setCurrentFile] = useState<number | null>(null)
   const [currentStep, setCurrentStep] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
@@ -42,14 +42,13 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
     const fs = Array.from(e.target.files || [])
     setFiles(fs)
     setRecords(fs.map(() => ({})))
-    setOutputs(fs.map(() => []))
+    setOutputs([])
   }
 
   const processFiles = async () => {
     if (loading || files.length === 0) return
     setLoading(true)
     const resRecords: Record<string, string>[] = []
-    const resOutputs: string[][] = []
     const steps = [...template.chatSteps].sort((a, b) => a.idx - b.idx)
     for (let i = 0; i < files.length; i++) {
       setCurrentFile(i)
@@ -61,28 +60,26 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
       })
       const data = await r.json()
       resRecords.push(data)
-      const stepOutputs: string[] = []
-      for (let j = 0; j < steps.length; j++) {
-        const step = steps[j]
-        if (!step.prompt.trim()) continue
-        setCurrentStep(j)
-        const deps = step.dependencies.length > 0 ? step.dependencies : [j - 1]
-        const input = deps
-          .map(d => (d === -1 ? JSON.stringify(data) : stepOutputs[d] || ""))
-          .join("\n")
-        const resp = await fetch(`${API_URL}/universal-chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input, prompt: step.prompt, globalPrompt: template.chatGlobalPrompt })
-        })
-        const out = await resp.json()
-        stepOutputs[j] = out.output
-      }
-      resOutputs.push([...stepOutputs])
     }
     setRecords(resRecords)
-    setOutputs(resOutputs)
     setCurrentFile(null)
+    const stepOutputs: string[] = []
+    let inputBase = JSON.stringify(resRecords)
+    for (let j = 0; j < steps.length; j++) {
+      const step = steps[j]
+      if (!step.prompt.trim()) continue
+      setCurrentStep(j)
+      const deps = step.dependencies.length > 0 ? step.dependencies : [j - 1]
+      const input = deps.map(d => (d === -1 ? inputBase : stepOutputs[d] || "")).join("\n")
+      const resp = await fetch(`${API_URL}/universal-chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, prompt: step.prompt, globalPrompt: template.chatGlobalPrompt })
+      })
+      const out = await resp.json()
+      stepOutputs[j] = out.output
+    }
+    setOutputs(stepOutputs)
     setCurrentStep(null)
     setLoading(false)
   }
@@ -99,17 +96,19 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
           <div key={i} className="border p-2 rounded space-y-2">
             <div className="font-bold">{files[i]?.name}</div>
             <pre className="whitespace-pre-wrap break-words bg-gray-100 dark:bg-slate-800 p-2 rounded text-xs">{JSON.stringify(rec, null, 2)}</pre>
-            <ul className="space-y-2">
-              {outputs[i]?.map((o, j) => (
-                <li key={j} className="border p-2 rounded flex items-start gap-2">
-                  <div className="font-bold">Étape {j + 1}</div>
-                  <div className="whitespace-pre-wrap break-words flex-1">{o}</div>
-                  {currentFile === i && currentStep === j && <span className="loading loading-spinner" />}
-                </li>
-              ))}
-            </ul>
           </div>
         ))}
+        {outputs.length > 0 && (
+          <ul className="space-y-2">
+            {outputs.map((o, j) => (
+              <li key={j} className="border p-2 rounded flex items-start gap-2">
+                <div className="font-bold">Étape {j + 1}</div>
+                <div className="whitespace-pre-wrap break-words flex-1">{o}</div>
+                {currentStep === j && <span className="loading loading-spinner" />}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
