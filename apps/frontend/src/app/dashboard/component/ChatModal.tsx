@@ -52,6 +52,7 @@ export default function ChatModal({ open, onClose, chat }: { open: boolean; onCl
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white dark:bg-slate-900 p-4 rounded w-96 space-y-2" onClick={e => e.stopPropagation()}>
         <h2 className="font-bold text-xl">{chat.title}</h2>
+        <div className="text-sm">{chat.description}</div>
         <Link href={`/universal-chat?id=${chat.id}`} className="btn btn-secondary w-full">Editer</Link>
         <input className="input input-bordered w-full" value={input} onChange={e => setInput(e.target.value)} placeholder="Entrée" />
         <button className="btn btn-primary w-full" onClick={runChat} disabled={loading}>{loading ? "..." : "Envoyer"}</button>

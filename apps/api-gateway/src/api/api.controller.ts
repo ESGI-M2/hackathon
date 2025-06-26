@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common'
 import { generateText, streamObject } from 'ai'
 import { getAIModel } from '../aiProvider'
 import { PrismaService } from '../prisma.service'
@@ -30,6 +30,22 @@ export class ApiController {
   async createChat(@Body() body: unknown) {
     const { title, description, globalPrompt, steps } = chatSchema.parse(body)
     return this.prisma.chatInfinite.create({
+      data: {
+        title,
+        description,
+        globalPrompt,
+        steps: { create: steps.map((s, idx) => ({ prompt: s.prompt, dependencies: s.dependencies, idx })) },
+      },
+      include: { steps: true },
+    })
+  }
+
+  @Put('chat-infinite/:id')
+  async updateChat(@Param('id') id: string, @Body() body: unknown) {
+    const { title, description, globalPrompt, steps } = chatSchema.parse(body)
+    await this.prisma.step.deleteMany({ where: { chatId: Number(id) } })
+    return this.prisma.chatInfinite.update({
+      where: { id: Number(id) },
       data: {
         title,
         description,
