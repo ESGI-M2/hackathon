@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import MultiImageForm, { Field } from "@/components/MultiImageForm";
+import { API_URL } from "@/lib/api";
 
 interface FormField {
   name: string;
@@ -52,7 +53,7 @@ export default function GeneratedFormPage() {
     }
 
     try {
-      const res = await fetch("/api/extractor", {
+      const res = await fetch(`${API_URL}/extractor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

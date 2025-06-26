@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { DynamicForm } from "@/components/DynamicForm";
+import { API_URL } from "@/lib/api";
 import { Button } from "@/components/button";
 import { Alert, AlertTitle } from "@/components/alert";
 import { Loader2, Sparkles, AlertCircle } from "lucide-react";
@@ -28,7 +29,7 @@ export default function GeneratedFormPage() {
         setError(null);
         setSchema(null);
         try {
-            const res = await fetch("/api/generative-form", {
+            const res = await fetch(`${API_URL}/generative-form`, {
                 method: "POST",
                 body: JSON.stringify({
                     prompt: prompt.trim(),

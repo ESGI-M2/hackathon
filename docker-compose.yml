@@ -1,5 +1,14 @@
-version: "3.8"
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hackathon
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   api-gateway:
     build:
       context: ./apps/api-gateway
@@ -35,5 +44,7 @@ services:
 
 volumes:
   nextjs_node_modules_data:
+  postgres_data:
+
   api_gateway_node_modules:
   form_gen_node_modules:
