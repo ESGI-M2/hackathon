@@ -23,7 +23,6 @@ export default function GeneratedFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
 
-  // Lit le fichier image et stocke sa version Base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -40,7 +39,6 @@ export default function GeneratedFormPage() {
     reader.readAsDataURL(file);
   };
 
-  // Envoie le prompt + image en JSON
   const fetchSchema = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -66,7 +64,6 @@ export default function GeneratedFormPage() {
         throw new Error(`Erreur ${res.status} : ${txt}`);
       }
 
-      // Lecture du flux textuel complet
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let jsonString = "";

@@ -37,7 +37,6 @@ export default function MultiImageForm({ initialFields }: Props) {
   const [fields, setFields] = useState<Field[]>([defaultField()]);
   const [records, setRecords] = useState<ImageRecord[]>([]);
 
-  // Initialize fields from props
   useEffect(() => {
     if (initialFields && initialFields.length > 0) {
       setFields(

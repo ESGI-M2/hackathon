@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common'
-import { generateText, streamObject } from 'ai'
+import { generateObject, generateText } from 'ai'
 import { getAIModel } from '../aiProvider'
 import { PrismaService } from '../prisma.service'
 import { mistral } from '@ai-sdk/mistral'
@@ -76,16 +76,15 @@ export class ApiController {
 
   @Post('generative-form')
   async generativeForm(@Body() input: string) {
-    const result = streamObject({
+    const { object } = await generateObject({
       model: getAIModel(),
-      system: `Vous êtes un générateur de formulaires dynamiques pour une plateforme de services digitale en ligne.\nGénérez **uniquement** un objet JSON correspondant à la demande :\n"${input}"\n– Utilisez strictement les types HTML5 pertinents.\n– Pas de champs inutiles, redondants, button, hidden ou password.\n– Les champs doivent être UX-friendly et ordonnés du plus essentiel au plus accessoire.\n- Pas de doublons dans les noms de champs et les options.`.trim(),
-      prompt: `Générez le JSON du formulaire pour "${input}".`,
+      mode: 'json',
       schema: formSchema,
-      onFinish({ object }) {
-        console.log('Form object generated:', object)
-      },
+      prompt: `Générez le JSON du formulaire pour "${input}".`,
+      system: `Vous êtes un générateur de formulaires dynamiques pour une plateforme de services digitale en ligne.\nGénérez **uniquement** un objet JSON correspondant à la demande :\n"${input}"\n– Utilisez strictement les types HTML5 pertinents.\n– Pas de champs inutiles, redondants, button, hidden ou password.\n– Les champs doivent être UX-friendly et ordonnés du plus essentiel au plus accessoire.\n- Pas de doublons dans les noms de champs et les options.`.trim(),
+      temperature: 0.2,
     })
-    return result.toTextStreamResponse()
+    return object
   }
 
   @Post('extractor')

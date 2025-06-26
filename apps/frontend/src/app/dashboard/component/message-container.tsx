@@ -92,7 +92,6 @@ const MessageItem: React.FC<{
 
 MessageItem.displayName = "MessageItem";
 
-// Use React.memo to prevent unnecessary re-renders
 const MessageContainer: React.FC<MessageContainerProps> = React.memo(
   ({ messages, error, toolCall, isLoading, showCitation, messagesEndRef }) => {
     return (
