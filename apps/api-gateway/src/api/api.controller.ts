@@ -120,14 +120,13 @@ export class ApiController {
       model: getAIModel(),
       messages,
       tools: { mail: mailTool },
-      maxSteps: 5
-    })
-    return { output: result.text }
+      maxSteps: 5,
+    });
+    return { output: result.text };
   }
 
   @Post('generative-form')
   async generativeForm(@Body() body: unknown) {
-    console.log('Received body:', body);
     const { input } = body as any as { input?: string };
     const { object } = await generateObject({
       model: getAIModel(),

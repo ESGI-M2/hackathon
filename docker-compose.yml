@@ -42,8 +42,8 @@ services:
     ports:
       - "3000:3000"
 
-  mailpit:
-    image: axllent/mailpit
+  mailhog:
+    image: mailhog/mailhog
     ports:
       - "8025:8025"
       - "1025:1025"
@@ -51,6 +51,5 @@ services:
 volumes:
   nextjs_node_modules_data:
   postgres_data:
-
   api_gateway_node_modules:
   form_gen_node_modules:
