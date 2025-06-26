@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Step {
   prompt: string
@@ -8,6 +8,8 @@ interface Step {
 
 interface Props {
   initialSteps?: Step[];
+  initialGlobalPrompt?: string;
+  onChange?: (steps: Step[], globalPrompt: string) => void;
 }
 
 const readFile = (file: File): Promise<string> =>
@@ -18,16 +20,20 @@ const readFile = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-export default function UniversalChat({ initialSteps = [] }: Props) {
+export default function UniversalChat({ initialSteps = [], initialGlobalPrompt = '', onChange }: Props) {
   const [steps, setSteps] = useState<Step[]>(
     initialSteps.length > 0 ? initialSteps : [{ prompt: '', dependencies: [-1] }],
   )
-  const [globalPrompt, setGlobalPrompt] = useState("");
+  const [globalPrompt, setGlobalPrompt] = useState(initialGlobalPrompt);
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [outputs, setOutputs] = useState<string[]>([]);
   const [durations, setDurations] = useState<number[]>([]);
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    onChange?.(steps, globalPrompt)
+  }, [steps, globalPrompt, onChange])
 
   const updatePrompt = (idx: number, value: string) => {
     console.debug('updatePrompt', idx, value)

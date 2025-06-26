@@ -1,6 +1,16 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hackathon
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   api-gateway:
     build: ./apps/api-gateway
     volumes:
@@ -9,14 +19,12 @@ services:
       - "4000:4000"
     depends_on:
       - microservice-test
-
   microservice-test:
     build: ./apps/microservice-test
     volumes:
       - ./apps/microservice-test:/srv/app
     ports:
       - "4001:4001"
-
   frontend:
     build: ./apps/frontend
     ports:
@@ -24,8 +32,12 @@ services:
     volumes:
       - ./apps/frontend:/srv/app
       - nextjs_node_modules_data:/srv/app/node_modules
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hackathon
     depends_on:
       - api-gateway
+      - postgres
 
 volumes:
   nextjs_node_modules_data:
+  postgres_data:
