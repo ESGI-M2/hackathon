@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { generateObject, generateText } from 'ai';
+import { mailTool } from '../tools/mail.tool';
 import { getAIModel } from '../aiProvider';
 import { PrismaService } from '../prisma.service';
 import { mistral } from '@ai-sdk/mistral';
@@ -115,8 +116,13 @@ export class ApiController {
             { role: 'user', content },
           ]
         : [{ role: 'user', content }];
-    const result = await generateText({ model: getAIModel(), messages });
-    return { output: result.text };
+    const result = await generateText({
+      model: getAIModel(),
+      messages,
+      tools: { mail: mailTool },
+      maxSteps: 5
+    })
+    return { output: result.text }
   }
 
   @Post('generative-form')
