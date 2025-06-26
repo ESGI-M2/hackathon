@@ -42,9 +42,14 @@ services:
     ports:
       - "3000:3000"
 
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
 volumes:
   nextjs_node_modules_data:
   postgres_data:
-
   api_gateway_node_modules:
   form_gen_node_modules:
