@@ -39,7 +39,6 @@ export const findRelevantContent = async (userQuery: string) => {
     queryType: "simple",
   };
 
-  // Conditionally add semanticSearchOptions
   if (process.env.AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME) {
     searchParameters.queryType = "semantic";
     searchParameters.semanticSearchOptions = {
@@ -47,14 +46,13 @@ export const findRelevantContent = async (userQuery: string) => {
     };
   }
 
-  // Conditionally add vectorSearchOptions
   if (process.env.AZURE_SEARCH_VECTOR_FIELD) {
     const userQueryEmbedded = await generateEmbedding(userQuery);
     searchParameters.vectorSearchOptions = {
       queries: [
         {
           kind: "vector",
-          fields: [process.env.AZURE_SEARCH_VECTOR_FIELD], // Use the vector field from env vars
+          fields: [process.env.AZURE_SEARCH_VECTOR_FIELD],
           kNearestNeighborsCount: process.env.AZURE_SEARCH_SEMANTIC_CONFIGURATION_NAME ? 50 : 5,
           vector: userQueryEmbedded,
         },
@@ -67,12 +65,12 @@ export const findRelevantContent = async (userQuery: string) => {
   const similarDocs = [];
   const contentColumn = process.env.AZURE_SEARCH_CONTENT_FIELD!;
   for await (const result of searchResults.results) {
-    const textField = (result.document as any).hasOwnProperty(contentColumn) ? (result.document as any)[contentColumn] : result.document; // Use specified content field if available, otherwise use document
-    const hash = createHash('sha256').update(textField).digest('base64').substring(0, 8); // Create a hash of the text field
+    const textField = (result.document as any).hasOwnProperty(contentColumn) ? (result.document as any)[contentColumn] : result.document;
+    const hash = createHash('sha256').update(textField).digest('base64').substring(0, 8);
 
     similarDocs.push({
       text: textField,
-      id: hash, // Add the hash to the object
+      id: hash,
       similarity: result.score,
     });
   }

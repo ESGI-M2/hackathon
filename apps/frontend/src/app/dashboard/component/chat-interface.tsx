@@ -83,7 +83,7 @@ export default function ChatInterface() {
           if (invocation.result) {
             invocation.result.forEach((item: { id: string; text: string }) => {
               if (typeof item === 'object' && item.id) {
-                newDocumentMap[item.id] = item.text; // Assuming item has a `text` field
+                newDocumentMap[item.id] = item.text
               }
             });
           }
