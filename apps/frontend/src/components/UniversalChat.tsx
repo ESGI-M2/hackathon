@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 
 interface Step {
   prompt: string
@@ -107,7 +108,7 @@ export default function UniversalChat({ initialSteps = [], initialGlobalPrompt =
       current = deps.map(d => (d === -1 ? input : outs[d] || '')).join('\n')
       console.debug('step request', { idx, prompt: step.prompt, input: current })
       const start = performance.now()
-      const res = await fetch('/api/universal-chat', {
+      const res = await fetch(`${API_URL}/universal-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: current, prompt: step.prompt, globalPrompt, media }),

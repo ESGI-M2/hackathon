@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import UniversalChat from '@/components/UniversalChat'
+import { API_URL } from '@/lib/api'
 
 interface Step { prompt: string; dependencies: number[] }
 interface Chat { id: number; title: string; description: string; globalPrompt?: string; steps: Step[] }
@@ -15,7 +16,7 @@ export default function ChatInfinitePage() {
   const [selected, setSelected] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch('/api/chat-infinite').then(r => r.json()).then(setChats)
+    fetch(`${API_URL}/chat-infinite`).then(r => r.json()).then(setChats)
   }, [])
 
   const select = (chat: Chat) => {
@@ -27,7 +28,7 @@ export default function ChatInfinitePage() {
   }
 
   const save = async () => {
-    const res = await fetch('/api/chat-infinite', {
+    const res = await fetch(`${API_URL}/chat-infinite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, description, globalPrompt, steps })

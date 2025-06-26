@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, ChangeEvent, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 
 export interface Field {
   id: number;
@@ -77,7 +78,7 @@ export default function MultiImageForm({ initialFields }: Props) {
   const extractForFile = async (file: File, idx: number) => {
     try {
       const image = await readFile(file);
-      const res = await fetch("/api/extract-data", {
+      const res = await fetch(`${API_URL}/extract-data`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

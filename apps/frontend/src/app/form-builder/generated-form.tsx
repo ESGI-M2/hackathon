@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { DynamicForm } from "@/components/DynamicForm";
+import { API_URL } from "@/lib/api";
 
 interface FormField {
     name: string;
@@ -24,7 +25,7 @@ export default function GeneratedFormPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch("/api/generative-form", {
+            const res = await fetch(`${API_URL}/generative-form`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(prompt),

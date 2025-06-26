@@ -17,8 +17,14 @@ services:
       - ./apps/api-gateway:/srv/app
     ports:
       - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hackathon
+      - AI_PROVIDER=${AI_PROVIDER}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
     depends_on:
       - microservice-test
+      - postgres
   microservice-test:
     build: ./apps/microservice-test
     volumes:
