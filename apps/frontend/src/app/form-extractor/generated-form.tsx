@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import MultiImageForm, { ImageRecord } from "@/components/MultiImageForm";
 import UniversalChat from "@/components/UniversalChat";
 import { API_URL } from "@/lib/api";
 
@@ -24,12 +23,14 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
   const [schema, setSchema] = useState<FormField[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [records, setRecords] = useState<ImageRecord[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [records, setRecords] = useState<Record<string, string>[]>([]);
+  const [outputs, setOutputs] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [chatSteps, setChatSteps] = useState<ChatStep[]>([]);
   const [chatGlobalPrompt, setChatGlobalPrompt] = useState("");
-  const ready = records.length > 0 && records.every(r => !r.loading);
-  const chatInput = JSON.stringify(records.map(r => r.data));
+  const [processing, setProcessing] = useState(false);
+  const chatInput = JSON.stringify(records);
 
   useEffect(() => {
     if (!templateId) return;
@@ -120,6 +121,35 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
     }
   };
 
+  const readFile = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+
+  const runExtraction = async () => {
+    if (!schema || files.length === 0) return;
+    setProcessing(true);
+    const images = await Promise.all(files.map(readFile));
+    const payload = {
+      fields: schema.map(({ name, label, type }) => ({ name, label, type })),
+      images,
+      chatSteps,
+      chatGlobalPrompt,
+    };
+    const res = await fetch(`${API_URL}/extract-data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    setRecords(data.records || []);
+    setOutputs(data.outputs || []);
+    setProcessing(false);
+  };
+
   return (
     <div className="p-4 space-y-4">
       <form className="mb-4">
@@ -163,14 +193,36 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
-          <MultiImageForm
-            initialFields={schema.map(({ name, label, type }) => ({ name, label, type }))}
-            onChange={setRecords}
+          <input
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            className="file-input file-input-bordered w-full"
+            onChange={e => setFiles(Array.from(e.target.files || []))}
           />
+          <button className="btn" type="button" onClick={runExtraction} disabled={processing || files.length === 0}>
+            {processing ? "..." : "Lancer"}
+          </button>
+          {records.map((rec, i) => (
+            <div key={i} className="border p-2 rounded space-y-2">
+              <div className="font-bold">{files[i]?.name}</div>
+              <pre className="whitespace-pre-wrap break-words bg-gray-100 dark:bg-slate-800 p-2 rounded text-xs">{JSON.stringify(rec, null, 2)}</pre>
+            </div>
+          ))}
+          {outputs.length > 0 && (
+            <ul className="space-y-2">
+              {outputs.map((o, j) => (
+                <li key={j} className="border p-2 rounded flex items-start gap-2">
+                  <div className="font-bold">Étape {j + 1}</div>
+                  <div className="whitespace-pre-wrap break-words flex-1">{o}</div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
-      {ready && (
+      {schema && (
         <UniversalChat
           initialInput={chatInput}
           initialSteps={chatSteps}

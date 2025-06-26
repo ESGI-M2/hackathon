@@ -26,8 +26,6 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
   const [files, setFiles] = useState<File[]>([])
   const [records, setRecords] = useState<Record<string, string>[]>([])
   const [outputs, setOutputs] = useState<string[]>([])
-  const [currentFile, setCurrentFile] = useState<number | null>(null)
-  const [currentStep, setCurrentStep] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
 
   const readFile = (file: File): Promise<string> =>
@@ -48,39 +46,15 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
   const processFiles = async () => {
     if (loading || files.length === 0) return
     setLoading(true)
-    const resRecords: Record<string, string>[] = []
-    const steps = [...template.chatSteps].sort((a, b) => a.idx - b.idx)
-    for (let i = 0; i < files.length; i++) {
-      setCurrentFile(i)
-      const image = await readFile(files[i])
-      const r = await fetch(`${API_URL}/extract-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: template.schema, image })
-      })
-      const data = await r.json()
-      resRecords.push(data)
-    }
-    setRecords(resRecords)
-    setCurrentFile(null)
-    const stepOutputs: string[] = []
-    let inputBase = JSON.stringify(resRecords)
-    for (let j = 0; j < steps.length; j++) {
-      const step = steps[j]
-      if (!step.prompt.trim()) continue
-      setCurrentStep(j)
-      const deps = step.dependencies.length > 0 ? step.dependencies : [j - 1]
-      const input = deps.map(d => (d === -1 ? inputBase : stepOutputs[d] || "")).join("\n")
-      const resp = await fetch(`${API_URL}/universal-chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, prompt: step.prompt, globalPrompt: template.chatGlobalPrompt })
-      })
-      const out = await resp.json()
-      stepOutputs[j] = out.output
-    }
-    setOutputs(stepOutputs)
-    setCurrentStep(null)
+    const images = await Promise.all(files.map(readFile))
+    const res = await fetch(`${API_URL}/extract-data`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ templateId: template.id, images })
+    })
+    const data = await res.json()
+    setRecords(data.records || [])
+    setOutputs(data.outputs || [])
     setLoading(false)
   }
 
@@ -104,7 +78,6 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
               <li key={j} className="border p-2 rounded flex items-start gap-2">
                 <div className="font-bold">Étape {j + 1}</div>
                 <div className="whitespace-pre-wrap break-words flex-1">{o}</div>
-                {currentStep === j && <span className="loading loading-spinner" />}
               </li>
             ))}
           </ul>
