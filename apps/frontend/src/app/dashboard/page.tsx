@@ -21,7 +21,12 @@ const services = [
     color: "bg-green-500",
     link: "/form-extractor",
   },
-  { id: 3, name: "Recherche CV", color: "bg-purple-500", link: "/search" },
+  {
+    id: 3,
+    name: "Universal Chat",
+    color: "bg-purple-500",
+    link: "/universal-chat",
+  },
 ];
 
 interface Step {
@@ -39,11 +44,11 @@ interface Chat {
 }
 
 interface Template {
-  id: number
-  title: string
-  schema: { name: string; label: string; type: string }[]
-  chatSteps: Step[]
-  chatGlobalPrompt?: string
+  id: number;
+  title: string;
+  schema: { name: string; label: string; type: string }[];
+  chatSteps: Step[];
+  chatGlobalPrompt?: string;
 }
 
 export default function Page() {
@@ -51,14 +56,16 @@ export default function Page() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Chat | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null
+  );
 
   useEffect(() => {
     fetch(`${API_URL}/chat-infinite`)
       .then((r) => r.json())
       .then(setChats);
     fetch(`${API_URL}/extraction-service`)
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setTemplates);
   }, []);
 
@@ -93,7 +100,11 @@ export default function Page() {
               {filteredTemplates.map((t) => (
                 <Bubble
                   key={`t-${t.id}`}
-                  service={{ id: `${t.id}`, name: t.title, color: "bg-emerald-500" }}
+                  service={{
+                    id: `${t.id}`,
+                    name: t.title,
+                    color: "bg-emerald-500",
+                  }}
                   onClick={() => setSelectedTemplate(t)}
                 />
               ))}
