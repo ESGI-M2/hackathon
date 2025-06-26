@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { generateText, streamObject } from 'ai'
 import { getAIModel } from '../aiProvider'
 import { PrismaService } from '../prisma.service'
@@ -19,6 +19,11 @@ export class ApiController {
   @Get('chat-infinite')
   listChats() {
     return this.prisma.chatInfinite.findMany({ include: { steps: true }, orderBy: { createdAt: 'desc' } })
+  }
+
+  @Get('chat-infinite/:id')
+  getChat(@Param('id') id: string) {
+    return this.prisma.chatInfinite.findUnique({ where: { id: Number(id) }, include: { steps: true } })
   }
 
   @Post('chat-infinite')
