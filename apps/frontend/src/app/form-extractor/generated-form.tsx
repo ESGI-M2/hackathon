@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import MultiImageForm from "@/components/MultiImageForm";
+import MultiImageForm, { ImageRecord } from "@/components/MultiImageForm";
+import UniversalChat from "@/components/UniversalChat";
 import { API_URL } from "@/lib/api";
 
 interface FormField {
@@ -21,7 +22,8 @@ export default function GeneratedFormPage() {
   const [schema, setSchema] = useState<FormField[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [records, setRecords] = useState<ImageRecord[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,13 +123,21 @@ export default function GeneratedFormPage() {
       )}
 
       {step === 2 && schema && (
-        <MultiImageForm
-          initialFields={schema.map(({ name, label, type }) => ({
-            name,
-            label,
-            type,
-          }))}
-        />
+        <div className="space-y-4">
+          <MultiImageForm
+            initialFields={schema.map(({ name, label, type }) => ({ name, label, type }))}
+            onChange={setRecords}
+          />
+          {records.length > 0 && (
+            <button className="btn btn-primary" onClick={() => setStep(3)}>
+              Continuer
+            </button>
+          )}
+        </div>
+      )}
+
+      {step === 3 && (
+        <UniversalChat initialInput={JSON.stringify(records.map(r => r.data))} />
       )}
     </div>
   );

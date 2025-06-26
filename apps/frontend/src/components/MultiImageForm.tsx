@@ -10,7 +10,7 @@ export interface Field {
   type: string;
 }
 
-interface ImageRecord {
+export interface ImageRecord {
   file: File;
   data: Record<string, string>;
   loading?: boolean;
@@ -31,9 +31,10 @@ const defaultField = (): Field => ({
 });
 interface Props {
   initialFields?: Omit<Field, "id">[];
+  onChange?: (records: ImageRecord[]) => void;
 }
 
-export default function MultiImageForm({ initialFields }: Props) {
+export default function MultiImageForm({ initialFields, onChange }: Props) {
   const [fields, setFields] = useState<Field[]>([defaultField()]);
   const [records, setRecords] = useState<ImageRecord[]>([]);
 
@@ -44,6 +45,10 @@ export default function MultiImageForm({ initialFields }: Props) {
       );
     }
   }, [initialFields]);
+
+  useEffect(() => {
+    onChange?.(records);
+  }, [records, onChange]);
 
   const handleFieldChange = (
     idx: number,
