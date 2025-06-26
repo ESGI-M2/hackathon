@@ -25,3 +25,13 @@ model Step {
   dependencies Json
   idx      Int
 }
+
+model ExtractionService {
+  id        Int      @id @default(autoincrement())
+  title     String
+  schema    Json
+  chatSteps Json?
+  chatGlobalPrompt String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

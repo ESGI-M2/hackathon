@@ -9,6 +9,7 @@ import { z } from 'zod';
 const stepSchema = z.object({
   prompt: z.string(),
   dependencies: z.array(z.number()),
+  idx: z.number().optional(),
 });
 const chatSchema = z.object({
   title: z.string(),
@@ -26,13 +27,19 @@ const fieldSchema = z.object({
   label: z.string(),
   name: z.string(),
   type: z.string(),
-  placeholder: z.string(),
+  placeholder: z.string().optional(),
   options: z.array(z.string()).optional(),
-  description: z.string(),
-  required: z.boolean(),
+  description: z.string().optional(),
+  required: z.boolean().optional(),
 });
 const formSchema = z.object({ fields: z.array(fieldSchema) });
 const recordSchema = z.record(z.string(), z.string());
+const extractionServiceSchema = z.object({
+  title: z.string(),
+  schema: z.array(fieldSchema),
+  chatSteps: z.array(stepSchema).optional(),
+  chatGlobalPrompt: z.string().optional(),
+});
 
 @Controller()
 export class ApiController {
@@ -93,6 +100,39 @@ export class ApiController {
         },
       },
       include: { steps: true },
+    });
+  }
+
+  @Get('extraction-service')
+  listExtractionServices() {
+    return this.prisma.extractionService.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Get('extraction-service/:id')
+  getExtractionService(@Param('id') id: string) {
+    return this.prisma.extractionService.findUnique({
+      where: { id: Number(id) },
+    });
+  }
+
+  @Post('extraction-service')
+  createExtractionService(@Body() body: unknown) {
+    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
+      extractionServiceSchema.parse(body);
+    return this.prisma.extractionService.create({
+      data: { title, schema, chatSteps, chatGlobalPrompt },
+    });
+  }
+
+  @Put('extraction-service/:id')
+  updateExtractionService(@Param('id') id: string, @Body() body: unknown) {
+    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
+      extractionServiceSchema.parse(body);
+    return this.prisma.extractionService.update({
+      where: { id: Number(id) },
+      data: { title, schema, chatSteps, chatGlobalPrompt },
     });
   }
 
@@ -172,7 +212,89 @@ export class ApiController {
 
   @Post('extract-data')
   async extractData(@Body() body: unknown) {
-    const { fields, image } = body as {
+    const data = body as any;
+    if (Array.isArray(data.images)) {
+      const req = z
+        .object({
+          templateId: z.number().optional(),
+          images: z.array(z.string()),
+          fields: z.array(fieldSchema).optional(),
+          chatSteps: z.array(stepSchema).optional(),
+          chatGlobalPrompt: z.string().optional(),
+        })
+        .parse(data);
+
+      let fields = req.fields ?? [];
+      let chatSteps = req.chatSteps ?? [];
+      let chatGlobalPrompt = req.chatGlobalPrompt ?? '';
+      if (req.templateId) {
+        const tpl = await this.prisma.extractionService.findUnique({
+          where: { id: req.templateId },
+        });
+        if (!tpl) return { error: 'template not found' };
+        fields = tpl.schema as any;
+        chatSteps = (tpl.chatSteps as any) ?? [];
+        chatGlobalPrompt = tpl.chatGlobalPrompt ?? '';
+      }
+      if (fields.length === 0) return { error: 'fields missing' };
+      const records: Record<string, string>[] = [];
+      for (const image of req.images) {
+        const description = fields
+          .map((f) => `${f.label} (${f.type}) -> ${f.name}`)
+          .join('; ');
+        const messages: any[] = [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Extrait uniquement les valeurs des champs suivants depuis l'image fournie. Rends un objet JSON avec les noms techniques : ${description}`,
+              },
+              { type: 'image', image },
+            ],
+          },
+        ];
+        const { object } = await generateObject({
+          model: mistral('pixtral-large-latest'),
+          system:
+            `Vous êtes un service d'extraction de données. Vous recevez une image et la liste des champs attendus. Retournez uniquement un objet JSON avec les valeurs extraites.`.trim(),
+          messages,
+          schema: recordSchema,
+        });
+        records.push(object);
+      }
+      const outputs: string[] = [];
+      const inputBase = JSON.stringify(records);
+      const steps = [...chatSteps].sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        if (!step.prompt.trim()) {
+          outputs[i] = '';
+          continue;
+        }
+        const deps = step.dependencies.length > 0 ? step.dependencies : [i - 1];
+        const input = deps
+          .map((d) => (d === -1 ? inputBase : outputs[d] || ''))
+          .join('\n');
+        const messages: { role: 'system' | 'user'; content: any }[] =
+          chatGlobalPrompt.trim()
+            ? [
+                { role: 'system', content: chatGlobalPrompt },
+                { role: 'user', content: `${step.prompt}\n${input}`.trim() },
+              ]
+            : [{ role: 'user', content: `${step.prompt}\n${input}`.trim() }];
+        const result = await generateText({
+          model: getAIModel(),
+          messages,
+          tools: { mail: mailTool },
+          maxSteps: 5,
+        });
+        outputs[i] = result.text;
+      }
+      return { records, outputs };
+    }
+
+    const { fields, image } = data as {
       fields?: { name: string; label: string; type: string }[];
       image?: string;
     };
