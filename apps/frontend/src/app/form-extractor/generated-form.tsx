@@ -16,6 +16,8 @@ interface FormField {
   required?: boolean;
 }
 
+type ChatStep = { prompt: string; dependencies: number[] };
+
 export default function GeneratedFormPage({ templateId }: { templateId?: string }) {
   const [prompt, setPrompt] = useState<string>("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -24,13 +26,18 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
   const [error, setError] = useState<string | null>(null);
   const [records, setRecords] = useState<ImageRecord[]>([]);
   const [title, setTitle] = useState("");
+  const [chatSteps, setChatSteps] = useState<ChatStep[]>([]);
+  const [chatGlobalPrompt, setChatGlobalPrompt] = useState("");
 
   useEffect(() => {
     if (!templateId) return;
     fetch(`${API_URL}/extraction-service/${templateId}`)
       .then(r => r.json())
       .then(data => {
+        setTitle(data.title);
         setSchema(data.schema);
+        setChatSteps(data.chatSteps ?? []);
+        setChatGlobalPrompt(data.chatGlobalPrompt ?? "");
       });
   }, [templateId]);
 
@@ -95,10 +102,15 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
 
   const saveTemplate = async () => {
     if (!schema || !title) return;
-    const res = await fetch(`${API_URL}/extraction-service`, {
-      method: "POST",
+    const payload = { title, schema, chatSteps, chatGlobalPrompt };
+    const url = templateId
+      ? `${API_URL}/extraction-service/${templateId}`
+      : `${API_URL}/extraction-service`;
+    const method = templateId ? "PUT" : "POST";
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, schema }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data.id) {
@@ -143,15 +155,12 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
 
       {schema && (
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <input
-              className="input input-bordered flex-1"
-              placeholder="Titre"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
-            <button className="btn" onClick={saveTemplate}>Sauvegarder</button>
-          </div>
+          <input
+            className="input input-bordered w-full"
+            placeholder="Titre"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
           <MultiImageForm
             initialFields={schema.map(({ name, label, type }) => ({ name, label, type }))}
             onChange={setRecords}
@@ -160,7 +169,21 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
       )}
 
       {records.length > 0 && (
-        <UniversalChat initialInput={JSON.stringify(records.map(r => r.data))} />
+        <UniversalChat
+          initialInput={JSON.stringify(records.map(r => r.data))}
+          initialSteps={chatSteps}
+          initialGlobalPrompt={chatGlobalPrompt}
+          onChange={(steps, gp) => {
+            setChatSteps(steps);
+            setChatGlobalPrompt(gp);
+          }}
+        />
+      )}
+
+      {schema && (
+        <div className="pt-4">
+          <button className="btn" onClick={saveTemplate}>Sauvegarder</button>
+        </div>
       )}
     </div>
   );

@@ -36,6 +36,8 @@ const recordSchema = z.record(z.string(), z.string());
 const extractionServiceSchema = z.object({
   title: z.string(),
   schema: z.array(fieldSchema),
+  chatSteps: z.array(stepSchema).optional(),
+  chatGlobalPrompt: z.string().optional(),
 });
 
 @Controller()
@@ -116,8 +118,21 @@ export class ApiController {
 
   @Post('extraction-service')
   createExtractionService(@Body() body: unknown) {
-    const { title, schema } = extractionServiceSchema.parse(body);
-    return this.prisma.extractionService.create({ data: { title, schema } });
+    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
+      extractionServiceSchema.parse(body);
+    return this.prisma.extractionService.create({
+      data: { title, schema, chatSteps, chatGlobalPrompt },
+    });
+  }
+
+  @Put('extraction-service/:id')
+  updateExtractionService(@Param('id') id: string, @Body() body: unknown) {
+    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
+      extractionServiceSchema.parse(body);
+    return this.prisma.extractionService.update({
+      where: { id: Number(id) },
+      data: { title, schema, chatSteps, chatGlobalPrompt },
+    });
   }
 
   @Post('universal-chat')
