@@ -42,7 +42,13 @@ export class ApiController {
       { type: 'text', text: `${prompt}\n${input}`.trim() },
     ]
     if (media) content.push({ type: 'image', image: media })
-    const messages = globalPrompt.trim() ? ([{ role: 'system', content: globalPrompt }, { role: 'user', content }] as const) : ([{ role: 'user', content }] as const)
+    const messages: { role: 'system' | 'user'; content: any }[] =
+      globalPrompt.trim()
+        ? [
+            { role: 'system', content: globalPrompt },
+            { role: 'user', content },
+          ]
+        : [{ role: 'user', content }]
     const result = await generateText({ model: getAIModel(), messages })
     return { output: result.text }
   }
