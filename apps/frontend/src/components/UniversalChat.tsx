@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 
 interface Step {
   prompt: string
@@ -8,6 +9,8 @@ interface Step {
 
 interface Props {
   initialSteps?: Step[];
+  initialGlobalPrompt?: string;
+  onChange?: (steps: Step[], globalPrompt: string) => void;
 }
 
 const readFile = (file: File): Promise<string> =>
@@ -18,16 +21,20 @@ const readFile = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-export default function UniversalChat({ initialSteps = [] }: Props) {
+export default function UniversalChat({ initialSteps = [], initialGlobalPrompt = '', onChange }: Props) {
   const [steps, setSteps] = useState<Step[]>(
     initialSteps.length > 0 ? initialSteps : [{ prompt: '', dependencies: [-1] }],
   )
-  const [globalPrompt, setGlobalPrompt] = useState("");
+  const [globalPrompt, setGlobalPrompt] = useState(initialGlobalPrompt);
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [outputs, setOutputs] = useState<string[]>([]);
   const [durations, setDurations] = useState<number[]>([]);
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    onChange?.(steps, globalPrompt)
+  }, [steps, globalPrompt, onChange])
 
   const updatePrompt = (idx: number, value: string) => {
     console.debug('updatePrompt', idx, value)
@@ -101,7 +108,7 @@ export default function UniversalChat({ initialSteps = [] }: Props) {
       current = deps.map(d => (d === -1 ? input : outs[d] || '')).join('\n')
       console.debug('step request', { idx, prompt: step.prompt, input: current })
       const start = performance.now()
-      const res = await fetch('/api/universal-chat', {
+      const res = await fetch(`${API_URL}/universal-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input: current, prompt: step.prompt, globalPrompt, media }),

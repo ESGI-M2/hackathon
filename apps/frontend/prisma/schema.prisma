@@ -1,0 +1,27 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ChatInfinite {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  globalPrompt String?
+  steps       Step[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Step {
+  id       Int      @id @default(autoincrement())
+  chatId   Int
+  chat     ChatInfinite @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  prompt   String
+  dependencies Json
+  idx      Int
+}
