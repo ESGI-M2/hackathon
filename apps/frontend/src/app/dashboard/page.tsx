@@ -6,6 +6,7 @@ import ChatInterface from "./component/chat-interface";
 import { ThemeProvider } from "next-themes";
 import { API_URL } from "@/lib/api";
 import ChatModal from "./component/ChatModal";
+import ExtractionModal from "./component/ExtractionModal";
 
 const services = [
   {
@@ -37,11 +38,20 @@ interface Chat {
   steps: Step[];
 }
 
+interface Template {
+  id: number
+  title: string
+  schema: { name: string; label: string; type: string }[]
+  chatSteps: Step[]
+  chatGlobalPrompt?: string
+}
+
 export default function Page() {
   const [chats, setChats] = useState<Chat[]>([]);
-  const [templates, setTemplates] = useState<{ id: number; title: string }[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Chat | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/chat-infinite`)
@@ -83,12 +93,8 @@ export default function Page() {
               {filteredTemplates.map((t) => (
                 <Bubble
                   key={`t-${t.id}`}
-                  service={{
-                    id: `${t.id}`,
-                    name: t.title,
-                    color: "bg-emerald-500",
-                    link: `/form-extractor?id=${t.id}`,
-                  }}
+                  service={{ id: `${t.id}`, name: t.title, color: "bg-emerald-500" }}
+                  onClick={() => setSelectedTemplate(t)}
                 />
               ))}
               {filteredChats.map((c) => (
@@ -111,6 +117,13 @@ export default function Page() {
           open={true}
           chat={selected}
           onClose={() => setSelected(null)}
+        />
+      )}
+      {selectedTemplate && (
+        <ExtractionModal
+          open={true}
+          template={selectedTemplate}
+          onClose={() => setSelectedTemplate(null)}
         />
       )}
     </>
