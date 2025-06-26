@@ -22,6 +22,7 @@ services:
       - AI_PROVIDER=${AI_PROVIDER}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       - microservice-test
       - postgres
