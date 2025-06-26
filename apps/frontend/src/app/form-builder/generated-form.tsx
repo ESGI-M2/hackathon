@@ -29,19 +29,20 @@ export default function GeneratedFormPage() {
     setError(null);
     setSchema(null);
     try {
-      const res = await fetch(`${API_URL}/generative-form`, {
-        method: "POST",
-        body: JSON.stringify({
-          input: prompt.trim(),
-        }),
-      });
+        const res = await fetch(`${API_URL}/generative-form`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ input: prompt.trim() }),
+        });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Error ${res.status}: ${txt}`);
-      }
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(`Error ${res.status}: ${txt}`);
+        }
 
-      const fields: FormField[] = await res.json();
+        const { fields }: FormField[] = await res.json();
       setSchema(fields);
     } catch (e: any) {
       setError(e.message);
