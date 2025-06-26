@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TestModule } from './test/test.module';
 import { ApiModule } from './api/api.module';
+import { FormGeneratorModule } from './form-generator/form-generator.module';
 
 @Module({
-  imports: [TestModule, ApiModule],
+  imports: [FormGeneratorModule, ApiModule],
 })
 export class AppModule {}
