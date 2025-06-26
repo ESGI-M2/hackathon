@@ -27,10 +27,10 @@ const fieldSchema = z.object({
   label: z.string(),
   name: z.string(),
   type: z.string(),
-  placeholder: z.string(),
+  placeholder: z.string().optional(),
   options: z.array(z.string()).optional(),
-  description: z.string(),
-  required: z.boolean(),
+  description: z.string().optional(),
+  required: z.boolean().optional(),
 });
 const formSchema = z.object({ fields: z.array(fieldSchema) });
 const recordSchema = z.record(z.string(), z.string());

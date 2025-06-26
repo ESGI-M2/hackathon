@@ -150,6 +150,16 @@ export default function GeneratedFormPage({ templateId }: { templateId?: string 
     setProcessing(false);
   };
 
+  useEffect(() => {
+    if (
+      records.length > 0 &&
+      records.every(r => Object.keys(r.data).length === 0) &&
+      !processing
+    ) {
+      runExtraction();
+    }
+  }, [records]);
+
   return (
     <div className="p-4 space-y-4">
       <form className="mb-4">
