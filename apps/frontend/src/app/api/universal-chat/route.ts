@@ -26,12 +26,15 @@ export async function POST(req: Request) {
     }),
   )
   const content: ({ type: 'text'; text: string } | { type: 'image'; image: string })[] = [
-    { type: 'text', text: `${prompt}\n${globalPrompt}\n${input}`.trim() },
+    { type: 'text', text: `${prompt}\n${input}`.trim() },
   ]
   if (media) content.push({ type: 'image', image: media })
+  const messages = globalPrompt.trim()
+    ? ([{ role: 'system', content: globalPrompt }, { role: 'user', content }] as const)
+    : ([{ role: 'user', content }] as const)
   const result = await generateText({
     model: getAIModel(),
-    messages: [{ role: 'user', content }],
+    messages,
   })
   console.log(
     JSON.stringify({ event: 'universal-chat-response', output: result.text }),
