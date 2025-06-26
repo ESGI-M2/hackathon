@@ -25,3 +25,11 @@ model Step {
   dependencies Json
   idx      Int
 }
+
+model ExtractionService {
+  id        Int      @id @default(autoincrement())
+  title     String
+  schema    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

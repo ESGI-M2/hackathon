@@ -33,6 +33,10 @@ const fieldSchema = z.object({
 });
 const formSchema = z.object({ fields: z.array(fieldSchema) });
 const recordSchema = z.record(z.string(), z.string());
+const extractionServiceSchema = z.object({
+  title: z.string(),
+  schema: z.array(fieldSchema),
+});
 
 @Controller()
 export class ApiController {
@@ -94,6 +98,26 @@ export class ApiController {
       },
       include: { steps: true },
     });
+  }
+
+  @Get('extraction-service')
+  listExtractionServices() {
+    return this.prisma.extractionService.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Get('extraction-service/:id')
+  getExtractionService(@Param('id') id: string) {
+    return this.prisma.extractionService.findUnique({
+      where: { id: Number(id) },
+    });
+  }
+
+  @Post('extraction-service')
+  createExtractionService(@Body() body: unknown) {
+    const { title, schema } = extractionServiceSchema.parse(body);
+    return this.prisma.extractionService.create({ data: { title, schema } });
   }
 
   @Post('universal-chat')

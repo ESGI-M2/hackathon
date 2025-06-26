@@ -39,6 +39,7 @@ interface Chat {
 
 export default function Page() {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [templates, setTemplates] = useState<{ id: number; title: string }[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Chat | null>(null);
 
@@ -46,6 +47,9 @@ export default function Page() {
     fetch(`${API_URL}/chat-infinite`)
       .then((r) => r.json())
       .then(setChats);
+    fetch(`${API_URL}/extraction-service`)
+      .then(r => r.json())
+      .then(setTemplates);
   }, []);
 
   const filteredServices = services.filter((s) =>
@@ -53,6 +57,9 @@ export default function Page() {
   );
   const filteredChats = chats.filter((c) =>
     c.title.toLowerCase().includes(query.toLowerCase())
+  );
+  const filteredTemplates = templates.filter((t) =>
+    t.title.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
@@ -72,6 +79,17 @@ export default function Page() {
             <div className="flex flex-wrap justify-center gap-10">
               {filteredServices.map((s) => (
                 <Bubble key={s.id} service={s} />
+              ))}
+              {filteredTemplates.map((t) => (
+                <Bubble
+                  key={`t-${t.id}`}
+                  service={{
+                    id: `${t.id}`,
+                    name: t.title,
+                    color: "bg-emerald-500",
+                    link: `/form-extractor?id=${t.id}`,
+                  }}
+                />
               ))}
               {filteredChats.map((c) => (
                 <Bubble
