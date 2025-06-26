@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { API_URL } from "@/lib/api"
+import Link from "next/link"
 
 interface Field {
   name: string
@@ -64,6 +65,7 @@ export default function ExtractionModal({ open, onClose, template }: { open: boo
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white dark:bg-slate-900 p-4 rounded w-[32rem] space-y-4 overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
         <h2 className="font-bold text-xl">{template.title}</h2>
+        <Link href={`/form-extractor?id=${template.id}`} className="btn btn-secondary w-full">Editer</Link>
         <input type="file" multiple accept="image/*,application/pdf" className="file-input file-input-bordered w-full" onChange={handleFiles} />
         <button className="btn btn-primary w-full" onClick={processFiles} disabled={loading || files.length === 0}>{loading ? "..." : "Lancer"}</button>
         {records.map((rec, i) => (
