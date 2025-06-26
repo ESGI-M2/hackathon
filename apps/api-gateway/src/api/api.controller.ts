@@ -9,6 +9,7 @@ import { z } from 'zod';
 const stepSchema = z.object({
   prompt: z.string(),
   dependencies: z.array(z.number()),
+  idx: z.number().optional(),
 });
 const chatSchema = z.object({
   title: z.string(),
@@ -275,12 +276,13 @@ export class ApiController {
         const input = deps
           .map((d) => (d === -1 ? inputBase : outputs[d] || ''))
           .join('\n');
-        const messages = chatGlobalPrompt.trim()
-          ? [
-              { role: 'system', content: chatGlobalPrompt },
-              { role: 'user', content: `${step.prompt}\n${input}`.trim() },
-            ]
-          : [{ role: 'user', content: `${step.prompt}\n${input}`.trim() }];
+        const messages: { role: 'system' | 'user'; content: any }[] =
+          chatGlobalPrompt.trim()
+            ? [
+                { role: 'system', content: chatGlobalPrompt },
+                { role: 'user', content: `${step.prompt}\n${input}`.trim() },
+              ]
+            : [{ role: 'user', content: `${step.prompt}\n${input}`.trim() }];
         const result = await generateText({
           model: getAIModel(),
           messages,
