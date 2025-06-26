@@ -3,35 +3,38 @@
 import React, { useState } from "react";
 
 interface Service {
-  id: string;
-  name: string;
-  link: string;
-  color: string;
+  id: string
+  name: string
+  link?: string
+  color: string
 }
 
-export default function Bubble({ service }: { service: Service }) {
+export default function Bubble({ service, onClick }: { service: Service; onClick?: () => void }) {
   const [hover, setHover] = useState(false);
 
   const bubbleColor = hoverBubbleColor(service.color);
 
   return (
     <div className="relative inline-block">
-      <a
-        href={service.link}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        className={`
-          relative flex items-center justify-center
-          text-white text-xl font-semibold text-center
-          rounded-full w-52 h-52
-          cursor-pointer select-none m-6
-          transition-transform duration-300 hover:scale-110
-          shadow-xl
-          ${service.color}
-        `}
-      >
-        {service.name}
-      </a>
+      {service.link && !onClick ? (
+        <a
+          href={service.link}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          className={`relative flex items-center justify-center text-white text-xl font-semibold text-center rounded-full w-52 h-52 cursor-pointer select-none m-6 transition-transform duration-300 hover:scale-110 shadow-xl ${service.color}`}
+        >
+          {service.name}
+        </a>
+      ) : (
+        <button
+          onClick={onClick}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          className={`relative flex items-center justify-center text-white text-xl font-semibold text-center rounded-full w-52 h-52 cursor-pointer select-none m-6 transition-transform duration-300 hover:scale-110 shadow-xl ${service.color}`}
+        >
+          {service.name}
+        </button>
+      )}
 
       {hover && (
         <div
