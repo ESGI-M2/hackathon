@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import MultiImageForm, { Field } from "@/components/MultiImageForm";
+import MultiImageForm from "@/components/MultiImageForm";
 import { API_URL } from "@/lib/api";
 
 interface FormField {
@@ -87,36 +87,37 @@ export default function GeneratedFormPage() {
     <div className="p-4 space-y-4">
       {step === 1 && (
         <form className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Décrivez votre extraction
-        </label>
-        <textarea
-          className="textarea textarea-bordered w-full mb-4"
-          placeholder="Décrivez votre extraction ici..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
+          <label className="block text-sm font-medium mb-2">
+            Décrivez votre extraction
+          </label>
+          <textarea
+            className="textarea textarea-bordered w-full mb-4"
+            placeholder="Décrivez votre extraction ici..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
 
-        <label className="block text-sm font-medium mb-2">
-          Télécharger une image ou un PDF
-        </label>
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          className="file-input file-input-bordered w-full mb-4"
-          onChange={handleFileChange}
-        />
+          <label className="block text-sm font-medium mb-2">
+            Télécharger une image ou un PDF
+          </label>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            className="file-input file-input-bordered w-full mb-4"
+            onChange={handleFileChange}
+          />
 
-        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+          {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
 
-        <button
-          className="btn btn-primary"
-          onClick={fetchSchema}
-          disabled={loading}
-        >
-          {loading ? "Analyse en cours…" : "Valider"}
-        </button>
-      </form>
+          <button
+            className="btn btn-primary"
+            onClick={fetchSchema}
+            disabled={loading}
+            type="button"
+          >
+            {loading ? "Analyse en cours…" : "Valider"}
+          </button>
+        </form>
       )}
 
       {step === 2 && schema && (
