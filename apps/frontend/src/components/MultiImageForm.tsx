@@ -30,25 +30,48 @@ const defaultField = (): Field => ({
   type: "text",
 });
 interface Props {
+  fields?: Field[];
+  records?: ImageRecord[];
+  autoExtract?: boolean;
+  onFieldsChange?: (f: Field[]) => void;
+  onRecordsChange?: (r: ImageRecord[]) => void;
   initialFields?: Omit<Field, "id">[];
-  onChange?: (records: ImageRecord[]) => void;
 }
 
-export default function MultiImageForm({ initialFields, onChange }: Props) {
-  const [fields, setFields] = useState<Field[]>([defaultField()]);
-  const [records, setRecords] = useState<ImageRecord[]>([]);
+export default function MultiImageForm({
+  fields: fieldsProp,
+  records: recordsProp,
+  autoExtract = true,
+  onFieldsChange,
+  onRecordsChange,
+  initialFields,
+}: Props) {
+  const [fields, setFields] = useState<Field[]>(
+    fieldsProp && fieldsProp.length > 0 ? fieldsProp : [defaultField()],
+  );
+  const [records, setRecords] = useState<ImageRecord[]>(recordsProp || []);
 
   useEffect(() => {
-    if (initialFields && initialFields.length > 0) {
-      setFields(
-        initialFields.map((f) => ({ ...f, id: Date.now() + Math.random() })),
-      );
+    if (initialFields && initialFields.length > 0 && fields.length === 1 && fields[0].name === "" && !fieldsProp) {
+      setFields(initialFields.map(f => ({ ...f, id: Date.now() + Math.random() })));
     }
   }, [initialFields]);
 
   useEffect(() => {
-    onChange?.(records);
-  }, [records, onChange]);
+    if (fieldsProp) setFields(fieldsProp);
+  }, [fieldsProp]);
+
+  useEffect(() => {
+    if (recordsProp) setRecords(recordsProp);
+  }, [recordsProp]);
+
+  useEffect(() => {
+    onFieldsChange?.(fields);
+  }, [fields, onFieldsChange]);
+
+  useEffect(() => {
+    onRecordsChange?.(records);
+  }, [records, onRecordsChange]);
 
   const handleFieldChange = (
     idx: number,
@@ -106,10 +129,12 @@ export default function MultiImageForm({ initialFields, onChange }: Props) {
 
   const handleFiles = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setRecords(files.map((file) => ({ file, data: {}, loading: true })));
-    files.forEach((file, idx) => {
-      extractForFile(file, idx);
-    });
+    setRecords(files.map((file) => ({ file, data: {}, loading: autoExtract })));
+    if (autoExtract) {
+      files.forEach((file, idx) => {
+        extractForFile(file, idx);
+      });
+    }
   };
 
   const handleRecordChange = (
