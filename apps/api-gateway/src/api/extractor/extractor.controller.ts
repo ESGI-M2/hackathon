@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { generateObject, generateText } from 'ai';
 import { getAIModel } from '../../aiProvider';
 import { mailTool } from '../../tools/mail.tool';
+import { mcpTool } from '../../tools/mcp.tool';
 import { PrismaService } from '../../prisma.service';
 import { fieldSchema, formSchema, recordSchema, stepSchema } from '../schemas';
 import { mistral } from '@ai-sdk/mistral';
@@ -114,7 +115,7 @@ export class ExtractorController {
         const result = await generateText({
           model: getAIModel(),
           messages,
-          tools: { mail: mailTool },
+          tools: { mail: mailTool, mcp: mcpTool },
           maxSteps: 5,
         });
         outputs[i] = result.text;

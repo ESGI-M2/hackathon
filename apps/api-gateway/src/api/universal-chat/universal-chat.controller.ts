@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { generateText } from 'ai';
 import { getAIModel } from '../../aiProvider';
 import { mailTool } from '../../tools/mail.tool';
+import { mcpTool } from '../../tools/mcp.tool';
 import { universalSchema } from '../schemas';
 
 @Controller()
@@ -25,7 +26,7 @@ export class UniversalChatController {
     const result = await generateText({
       model: getAIModel(),
       messages,
-      tools: { mail: mailTool },
+      tools: { mail: mailTool, mcp: mcpTool },
       maxSteps: 5,
     });
     return { output: result.text };
