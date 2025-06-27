@@ -17,8 +17,6 @@ export class GenerativeFormController {
         `Vous êtes un générateur de formulaires dynamiques pour une plateforme de services digitale en ligne.\nGénérez **uniquement** un objet JSON correspondant à la demande :\n"${input}"\n– Utilisez strictement les types HTML5 pertinents.\n– Pas de champs inutiles, redondants, button, hidden ou password.\n– Les champs doivent être UX-friendly et ordonnés du plus essentiel au plus accessoire.\n- Pas de doublons dans les noms de champs et les options.`.trim(),
       temperature: 0.2,
     });
-    console.log('Generated form schema:', object);
-    console.log('input:', input);
     return object;
   }
 }

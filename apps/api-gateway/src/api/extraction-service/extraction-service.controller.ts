@@ -22,8 +22,12 @@ export class ExtractionServiceController {
 
   @Post('extraction-service')
   createExtractionService(@Body() body: unknown) {
-    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
-      extractionServiceSchema.parse(body);
+    const {
+      title,
+      schema,
+      chatSteps = [],
+      chatGlobalPrompt = '',
+    } = extractionServiceSchema.parse(body);
     return this.prisma.extractionService.create({
       data: { title, schema, chatSteps, chatGlobalPrompt },
     });
@@ -31,8 +35,12 @@ export class ExtractionServiceController {
 
   @Put('extraction-service/:id')
   updateExtractionService(@Param('id') id: string, @Body() body: unknown) {
-    const { title, schema, chatSteps = [], chatGlobalPrompt = '' } =
-      extractionServiceSchema.parse(body);
+    const {
+      title,
+      schema,
+      chatSteps = [],
+      chatGlobalPrompt = '',
+    } = extractionServiceSchema.parse(body);
     return this.prisma.extractionService.update({
       where: { id: Number(id) },
       data: { title, schema, chatSteps, chatGlobalPrompt },

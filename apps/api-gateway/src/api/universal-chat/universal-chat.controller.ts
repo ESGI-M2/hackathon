@@ -2,15 +2,19 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { generateText } from 'ai';
 import { getAIModel } from '../../aiProvider';
 import { mailTool } from '../../tools/mail.tool';
-import { mcpTool } from '../../tools/mcp.tool';
+import { mailCsv } from '../../tools/mailcsv.tool';
 import { universalSchema } from '../schemas';
 
 @Controller()
 export class UniversalChatController {
   @Post('universal-chat')
   async universalChat(@Body() body: unknown) {
-    const { input = '', prompt, globalPrompt = '', media } =
-      universalSchema.parse(body);
+    const {
+      input = '',
+      prompt,
+      globalPrompt = '',
+      media,
+    } = universalSchema.parse(body);
     const content: (
       | { type: 'text'; text: string }
       | { type: 'image'; image: string }
@@ -26,7 +30,7 @@ export class UniversalChatController {
     const result = await generateText({
       model: getAIModel(),
       messages,
-      tools: { mail: mailTool, mcp: mcpTool },
+      tools: { mailTool, mailCsv },
       maxSteps: 5,
     });
     return { output: result.text };
