@@ -20,17 +20,6 @@ services:
     ports:
       - "4000:4000"
 
-  form-generator-service:
-    build:
-      context: ./apps/form-generator-service
-    volumes:
-      - ./apps/form-generator-service:/srv/app
-      - form_gen_node_modules:/srv/app/node_modules
-    command: npm run start:dev
-    env_file: ./apps/form-generator-service/.env
-    ports:
-      - "3999:3999"
-
   frontend:
     build:
       context: ./apps/frontend

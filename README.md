@@ -37,10 +37,6 @@ cd apps/api-gateway && npm install && npm run start:dev
 ```
 
 ```bash
-cd apps/form-generator-service && npm install && npm run start:dev
-```
-
-```bash
 cd apps/frontend && npm install && npm run dev
 ```
 
