@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import StepFlow from "./StepFlow";
 import { API_URL } from "@/lib/api";
 
 interface Step {
@@ -143,19 +144,6 @@ export default function UniversalChat({ initialSteps = [], initialGlobalPrompt =
     )
   }
 
-  const renderPreview = (idx: number, visited: Set<number>): JSX.Element | null => {
-    if (visited.has(idx)) return null
-    visited.add(idx)
-    const deps = steps[idx].dependencies.length > 0 ? steps[idx].dependencies : [idx - 1]
-    return (
-      <li key={idx} className="border-l pl-4">
-        <div className="ml-2">Étape {idx + 1}</div>
-        {deps.filter(d => d >= 0).length > 0 && (
-          <ul className="ml-4 flex flex-col-reverse">{deps.filter(d => d >= 0).map(d => renderPreview(d, visited))}</ul>
-        )}
-      </li>
-    )
-  }
 
   return (
     <div className="space-y-4">
@@ -234,9 +222,7 @@ export default function UniversalChat({ initialSteps = [], initialGlobalPrompt =
       </button>
       <div>
         <div className="font-bold mb-2">Prévisualisation</div>
-        <ul className="space-y-2 flex flex-col-reverse">
-          {renderPreview(steps.length - 1, new Set())}
-        </ul>
+        <StepFlow steps={steps} />
       </div>
       {outputs.length > 0 && (
         <ul className="space-y-2 flex flex-col-reverse">
