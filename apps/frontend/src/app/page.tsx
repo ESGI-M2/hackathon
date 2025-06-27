@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Bubble from "./component/Bubble";
-import ChatInterface from "./component/chat-interface";
+import Bubble from "./dashboard/component/Bubble";
+import ChatInterface from "./dashboard/component/chat-interface";
 import { ThemeProvider } from "next-themes";
 import { API_URL } from "@/lib/api";
-import ChatModal from "./component/ChatModal";
-import ExtractionModal from "./component/ExtractionModal";
+import ChatModal from "./dashboard/component/ChatModal";
+import ExtractionModal from "./dashboard/component/ExtractionModal";
 
 const services = [
   {
